@@ -1,0 +1,279 @@
+/**
+ * Trip List Styles — Selection Only
+ */
+
+.triplist-container {
+    min-height: 100vh;
+    background: #f5f5f5;
+    padding-bottom: 40px;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: #666;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #ff6b35;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Tabs */
+.tabs-container {
+    display: flex;
+    padding: 1rem;
+    gap: 0.5rem;
+    overflow-x: auto;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--muted-foreground);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    font-weight: 600;
+}
+
+/* Header */
+.triplist-header {
+    background: var(--primary);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: white;
+}
+
+.triplist-header h1 {
+    margin: 0;
+    font-size: 20px;
+}
+
+/* Van Info */
+.van-info-bar {
+    background: var(--foreground);
+    color: white;
+    padding: 12px 20px;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Trips Section */
+.trips-section {
+    padding: 0 20px;
+}
+
+.trips-section h3 {
+    color: var(--muted-foreground);
+    font-size: 16px;
+    margin: 20px 0 12px 0;
+}
+
+.trip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.trip-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+}
+
+.trip-card:active {
+    transform: scale(0.98);
+    background: var(--background);
+}
+
+.trip-time {
+    background: var(--primary);
+    color: white;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.trip-details {
+    flex: 1;
+}
+
+.trip-details h4 {
+    margin: 0 0 4px 0;
+    color: var(--foreground);
+    font-size: 16px;
+}
+
+.trip-details p {
+    margin: 0;
+    color: var(--muted-foreground);
+    font-size: 14px;
+}
+
+.trip-arrow {
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted-foreground);
+}
+
+.empty-state p {
+    margin: 4px 0;
+}
+
+/* ===== TRIP CONFIRM MODAL ===== */
+.trip-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 900;
+    padding: 20px;
+}
+
+.trip-confirm-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+    animation: modalSlideUp 0.25s ease;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.trip-confirm-icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+}
+
+.trip-confirm-modal h3 {
+    font-size: 18px;
+    color: #333;
+    margin: 0 0 16px 0;
+}
+
+.trip-confirm-info {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 20px;
+}
+
+.confirm-route {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--partner-orange, #e67e22);
+    margin: 0 0 6px 0;
+}
+
+.confirm-time,
+.confirm-seats {
+    font-size: 14px;
+    color: #666;
+    margin: 2px 0;
+}
+
+.trip-confirm-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-confirm-no {
+    flex: 1;
+    padding: 14px;
+    border: 1px solid var(--border, #e0e0e0);
+    background: white;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+}
+
+.btn-confirm-yes {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    background: var(--partner-orange, #e67e22);
+    color: white;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-confirm-yes:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.confirm-error {
+    font-size: 13px;
+    color: #e74c3c;
+    margin: 8px 0 0 0;
+    background: #fff5f5;
+    border: 1px solid #fcd5d5;
+    border-radius: 6px;
+    padding: 6px 10px;
+    text-align: left;
+}
