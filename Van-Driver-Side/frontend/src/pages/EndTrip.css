@@ -1,0 +1,218 @@
+/**
+ * EndTrip Page Styles
+ */
+
+.endtrip-container {
+    min-height: 100vh;
+    background: #f5f5f5;
+    padding-bottom: 120px;
+}
+
+/* Header */
+.endtrip-header {
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.endtrip-header h1 {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+}
+
+/* Trip Card */
+.trip-card {
+    background: white;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.route-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.trip-meta {
+    display: flex;
+    gap: 20px;
+    color: #666;
+}
+
+/* GPS Status */
+.gps-status {
+    background: white;
+    margin: 0 20px 20px;
+    padding: 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.gps-status.loading {
+    background: #f5f5f5;
+}
+
+.gps-status.success {
+    background: #e8f5e9;
+    border: 2px solid #4caf50;
+}
+
+.gps-status.error {
+    background: #fff3e0;
+    border: 2px solid #f57c00;
+}
+
+.gps-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #4caf50;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.gps-icon {
+    font-size: 32px;
+}
+
+.gps-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.gps-label {
+    font-size: 14px;
+    color: #666;
+}
+
+.gps-coords {
+    font-weight: 600;
+    color: #333;
+}
+
+.btn-retry {
+    margin-left: auto;
+    background: #f57c00;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Destination Check */
+.destination-check {
+    background: white;
+    margin: 0 20px 20px;
+    padding: 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.destination-check.passed {
+    background: #e8f5e9;
+}
+
+.check-icon {
+    font-size: 28px;
+}
+
+/* Reset Note */
+.reset-note {
+    background: #e3f2fd;
+    margin: 0 20px 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.note-icon {
+    font-size: 24px;
+}
+
+.reset-note p {
+    margin: 0;
+    color: #1976d2;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.reset-note strong {
+    color: #0d47a1;
+}
+
+/* Actions */
+.endtrip-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.btn-complete {
+    width: 100%;
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    color: white;
+    border: none;
+    padding: 20px;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 64px;
+}
+
+.btn-complete:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-complete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}

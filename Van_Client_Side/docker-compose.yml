@@ -1,0 +1,72 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    ports:
+      - "27018:27017"
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+      - ./routes.json:/docker-entrypoint-initdb.d/routes.json
+      - ./trips.json:/docker-entrypoint-initdb.d/trips.json
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' localhost:27017/test | grep 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  mongo-rs-init:
+    image: mongo:7
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      bash -lc "
+      echo 'Waiting for mongod...';
+      until mongosh --host mongo:27017 --quiet --eval 'db.runCommand({ ping: 1 }).ok' | grep 1; do sleep 1; done;
+
+      echo 'Initiating rs0 (if needed)...';
+      mongosh --host mongo:27017 --quiet --eval '
+        try { rs.status() }
+        catch (e) { rs.initiate({_id:\"rs0\", members:[{_id:0, host:\"mongo:27017\"}]}) }
+      ';
+
+      echo 'Waiting for PRIMARY...';
+      until mongosh --host mongo:27017 --quiet --eval 'db.hello().isWritablePrimary' | grep true; do sleep 1; done;
+
+      echo 'Replica set rs0 is PRIMARY.';
+      "
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    env_file:
+      - ./backend/.env.docker
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/vanbooking?replicaSet=rs0
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    env_file:
+      - ./frontend/.env.docker
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    ports:
+      - "8080:8080"   
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

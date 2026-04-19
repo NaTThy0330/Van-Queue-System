@@ -1,0 +1,301 @@
+/* ==================== Payment Verification ==================== */
+
+.payment-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--background) 0%, hsl(20, 30%, 95%) 100%);
+    padding-bottom: 2rem;
+}
+
+/* ---------- Header ---------- */
+.payment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1rem;
+    background: linear-gradient(135deg, hsl(20, 90%, 48%) 0%, hsl(25, 85%, 42%) 100%);
+    color: white;
+}
+
+.payment-header .back-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+}
+
+.payment-header h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex: 1;
+}
+
+.payment-count {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.25);
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+}
+
+/* ---------- Payment List ---------- */
+.payment-list {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ---------- Payment Card ---------- */
+.payment-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+/* Ticket Info Header */
+.payment-ticket-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.payment-ticket-info .ticket-code-badge {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.type-badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.75rem;
+}
+
+.type-badge.online {
+    background: hsl(210, 80%, 93%);
+    color: hsl(210, 80%, 40%);
+}
+
+.type-badge.walkin {
+    background: hsl(142, 60%, 93%);
+    color: hsl(142, 60%, 30%);
+}
+
+/* Passenger Row */
+.payment-passenger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.passenger-icon {
+    font-size: 1rem;
+}
+
+.payment-passenger .passenger-name {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.payment-amount {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Payment Status */
+.payment-status-row {
+    margin-bottom: 0.75rem;
+}
+
+.payment-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+}
+
+.payment-status.pending {
+    color: hsl(30, 90%, 45%);
+}
+
+.payment-status.unpaid {
+    color: var(--danger);
+}
+
+/* Slip Preview */
+.slip-preview-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: hsl(0, 0%, 97%);
+    border-radius: var(--radius);
+    border: 1px dashed var(--border);
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.slip-preview-area:hover {
+    border-color: var(--primary);
+    background: hsl(20, 100%, 98%);
+}
+
+.slip-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+}
+
+.slip-hint {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+}
+
+/* Action Buttons */
+.payment-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-approve {
+    flex: 1;
+    padding: 0.6rem;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-approve:hover:not(:disabled) {
+    background: hsl(142, 76%, 30%);
+}
+
+.btn-approve:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-reject {
+    flex: 1;
+    padding: 0.6rem;
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid hsl(0, 60%, 85%);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-reject:hover:not(:disabled) {
+    background: hsl(0, 80%, 95%);
+}
+
+.btn-approve.large, .btn-reject.large {
+    padding: 0.85rem;
+    font-size: 1rem;
+}
+
+/* ---------- Slip Modal ---------- */
+.slip-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.slip-modal {
+    background: var(--card);
+    border-radius: var(--radius);
+    max-width: 400px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.slip-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.slip-ticket-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.slip-ticket-detail .ticket-code-badge.large {
+    font-size: 1rem;
+}
+
+.slip-passenger-name {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+}
+
+.slip-close-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--muted);
+    border: none;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slip-full-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    background: hsl(0, 0%, 97%);
+}
+
+.slip-modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+}
+
+/* ---------- Empty State ---------- */
+.payment-container .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    color: var(--muted-foreground);
+    gap: 1rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+}
