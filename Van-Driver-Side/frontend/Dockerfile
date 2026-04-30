@@ -12,6 +12,12 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Build-time API endpoints for Azure deployment
+ARG VITE_API_URL=http://localhost:5000
+ARG VITE_SOCKET_URL=http://localhost:5000
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_SOCKET_URL=${VITE_SOCKET_URL}
+
 # Build for production
 RUN npm run build
 

@@ -15,7 +15,13 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, morgan_1.default)("dev"));
 app.use("/uploads", express_1.default.static(env_1.config.uploadDir));
+
+app.get("/health", (_req, res) => {
+    res.json({ status: "ok" });
+});
+
 app.use(routes_1.default);
+
 app.use(errorHandler_1.errorHandler);
 exports.default = app;
 //# sourceMappingURL=app.js.map

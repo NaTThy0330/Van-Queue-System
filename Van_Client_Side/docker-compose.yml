@@ -43,13 +43,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: backend
-    env_file:
-      - ./backend/.env.docker
     environment:
       - MONGO_URI=mongodb://mongo:27017/vanbooking?replicaSet=rs0
-      - PORT=3000
+      - PORT=4000
     ports:
-      - "3000:3000"
+      - "4000:4000"
     depends_on:
       mongo:
         condition: service_healthy
@@ -58,13 +56,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:4000
     container_name: frontend
-    env_file:
-      - ./frontend/.env.docker
-    environment:
-      - VITE_API_URL=http://localhost:3000
     ports:
-      - "8080:8080"   
+      - "8080:80"
     depends_on:
       - backend
 
