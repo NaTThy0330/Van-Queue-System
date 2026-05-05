@@ -7,7 +7,7 @@ interface AppConfig {
     unpaidCutoffMinutes: number;
     paidLateMinutes: number;
     uploadDir: string;
-    fcmServerKey?: string;
+    firebaseCredentialPath?: string;
 }
 export declare const config: AppConfig;
 export {};

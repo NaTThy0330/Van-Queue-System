@@ -18,8 +18,6 @@ const baseConfig = {
     paidLateMinutes: Number(process.env.PAID_LATE_MINUTES || 5),
     uploadDir: process.env.UPLOAD_DIR || path_1.default.join(process.cwd(), "uploads"),
 };
-if (process.env.FCM_SERVER_KEY) {
-    baseConfig.fcmServerKey = process.env.FCM_SERVER_KEY;
-}
+baseConfig.firebaseCredentialPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || './firebase-adminsdk.json';
 exports.config = baseConfig;
 //# sourceMappingURL=env.js.map
