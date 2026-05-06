@@ -2,7 +2,7 @@ import { Suspense, useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppStore } from "./store";
-import { onDepartureAlert, disconnectDriverSocket } from "./lib/driverSocket";
+import { onDepartureAlert, syncDepartureTripSubscriptions, disconnectPassengerSocket } from "./lib/passengerSocket";
 import { AppLoadingScreen } from "./components/AppLoadingScreen";
 
 export function Root() {
@@ -12,12 +12,20 @@ export function Root() {
   const isAuthLoading = useAppStore((s: any) => s.isAuthLoading);
   const authReady = useAppStore((s: any) => s.authReady);
   const bootstrapAuth = useAppStore((s: any) => s.bootstrapAuth);
+  const loadBookings = useAppStore((s: any) => s.loadBookings);
+  const bookings = useAppStore((s: any) => s.bookings);
 
   const [notification, setNotification] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
     bootstrapAuth();
   }, [bootstrapAuth]);
+
+  useEffect(() => {
+    if (authReady && isLoggedIn) {
+      loadBookings(true);
+    }
+  }, [authReady, isLoggedIn, loadBookings]);
 
   useEffect(() => {
     const publicPaths = ["/"];
@@ -33,9 +41,27 @@ export function Root() {
     });
     return () => {
       unsub();
-      disconnectDriverSocket();
+      disconnectPassengerSocket();
     };
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      syncDepartureTripSubscriptions([]);
+      return;
+    }
+
+    const tripIds = Array.from(
+      new Set(
+        bookings
+          .filter((booking: any) => !["completed", "expired", "cancelled"].includes(booking.status))
+          .map((booking: any) => booking.tripId)
+          .filter(Boolean)
+      )
+    );
+
+    syncDepartureTripSubscriptions(tripIds);
+  }, [bookings, isLoggedIn]);
 
   return (
     <div className="flex min-h-screen justify-center bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.18),_transparent_36%),linear-gradient(180deg,#fff7f0_0%,#fff8f2_48%,#fffdf9_100%)]">

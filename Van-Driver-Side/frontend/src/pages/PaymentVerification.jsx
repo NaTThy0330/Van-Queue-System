@@ -16,6 +16,27 @@ const resolveSlipUrl = (payment) => {
     return `${baseUrl}${raw.startsWith('/') ? '' : '/'}${raw}`;
 };
 
+const resolveTicketCode = (payment) => {
+    return (
+        payment?.ticket_code ||
+        payment?.ticketCode ||
+        payment?.queue_id?.ticket_code ||
+        payment?.queue_id?.ticketCode ||
+        (payment?.seat_number ? `S-${String(payment.seat_number).padStart(2, '0')}` : null) ||
+        null
+    );
+};
+
+const resolvePassengerName = (payment) => {
+    return (
+        payment?.passenger_name ||
+        payment?.passengerName ||
+        payment?.queue_id?.passenger_name ||
+        payment?.queue_id?.passengerName ||
+        'ไม่ระบุชื่อ'
+    );
+};
+
 export default function PaymentVerification({ trip, onBack }) {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -23,12 +44,19 @@ export default function PaymentVerification({ trip, onBack }) {
     const [previewSlip, setPreviewSlip] = useState(null);
 
     useEffect(() => {
-        loadPayments();
-    }, [trip]);
+        if (!trip?._id) {
+            setPayments([]);
+            setLoading(false);
+            return;
+        }
 
-    const loadPayments = async () => {
+        setLoading(true);
+        loadPayments(trip._id);
+    }, [trip?._id]);
+
+    const loadPayments = async (tripId) => {
         try {
-            const data = await getPendingPayments(trip._id);
+            const data = await getPendingPayments(tripId);
             if (data.success) {
                 setPayments(data.payments || []);
             }
@@ -40,18 +68,18 @@ export default function PaymentVerification({ trip, onBack }) {
     };
 
     const handleVerify = async (paymentId, action) => {
-        setActionLoading(prev => ({ ...prev, [paymentId]: action }));
+        setActionLoading((prev) => ({ ...prev, [paymentId]: action }));
         try {
             const data = await verifyPayment(paymentId, action);
             if (data.success) {
-                setPayments(prev => prev.filter(p => p._id !== paymentId));
+                setPayments((prev) => prev.filter((p) => p._id !== paymentId));
                 setPreviewSlip(null);
             }
         } catch (err) {
             console.error('Verify error:', err);
             alert('ดำเนินการไม่สำเร็จ');
         } finally {
-            setActionLoading(prev => ({ ...prev, [paymentId]: null }));
+            setActionLoading((prev) => ({ ...prev, [paymentId]: null }));
         }
     };
 
@@ -68,7 +96,6 @@ export default function PaymentVerification({ trip, onBack }) {
 
     return (
         <div className="payment-container">
-            {/* Header */}
             <div className="payment-header">
                 <button className="back-btn" onClick={onBack}>
                     <ChevronLeft size={24} />
@@ -76,63 +103,81 @@ export default function PaymentVerification({ trip, onBack }) {
                 <h1>ตรวจสอบการชำระเงิน</h1>
             </div>
 
-            {/* Summary */}
             <div className="summary-bar">
-                <span>รอตรวจสอบ: <strong>{payments.length}</strong> รายการ</span>
+                <span>
+                    รอตรวจสอบ: <strong>{payments.length}</strong> รายการ
+                </span>
             </div>
 
-            {/* Payment List */}
             {payments.length > 0 ? (
                 <div className="payment-list">
-                    {payments.map((payment) => (
-                        <div key={payment._id} className="payment-card">
-                            <div className="payment-info">
-                                <span className="passenger-name">
-                                    {payment.passenger_name || payment.queue_id?.passenger_name || 'ไม่ระบุชื่อ'}
-                                </span>
-                                <span className="amount">฿{payment.amount || 0}</span>
-                            </div>
+                    {payments.map((payment) => {
+                        const slipSrc = resolveSlipUrl(payment);
+                        const ticketCode = resolveTicketCode(payment);
+                        const passengerName = resolvePassengerName(payment);
 
-                            {payment.slip_url && (
-                                <div
-                                    className="slip-preview"
-                                    onClick={() => setPreviewSlip(payment)}
-                                >
-                                    <img src={payment.slip_url} alt="Slip" />
-                                    <span>แตะเพื่อดูเต็ม</span>
+                        return (
+                            <div key={payment._id} className="payment-card">
+                                <div className="payment-info">
+                                    <div>
+                                        <span className="ticket-number-label">ตั๋ว</span>
+                                        <span className="ticket-number-value">
+                                            {ticketCode || `#${String(payment._id).slice(-6).toUpperCase()}`}
+                                        </span>
+                                    </div>
+                                    <span className="passenger-name">{passengerName}</span>
+                                    <span className="amount">฿{payment.amount || 0}</span>
                                 </div>
-                            )}
 
-                            <div className="payment-actions">
-                                <button
-                                    className="btn-approve"
-                                    onClick={() => handleVerify(payment._id, 'approve')}
-                                    disabled={actionLoading[payment._id]}
-                                >
-                                    {actionLoading[payment._id] === 'approve' ? '...' : '✓ อนุมัติ'}
-                                </button>
-                                <button
-                                    className="btn-reject"
-                                    onClick={() => handleVerify(payment._id, 'reject')}
-                                    disabled={actionLoading[payment._id]}
-                                >
-                                    {actionLoading[payment._id] === 'reject' ? '...' : '✕ ปฏิเสธ'}
-                                </button>
+                                {slipSrc && (
+                                    <div
+                                        className="slip-preview"
+                                        onClick={() => setPreviewSlip(payment)}
+                                    >
+                                        <img src={slipSrc} alt="Slip" />
+                                        <span>แตะเพื่อดูเต็ม</span>
+                                    </div>
+                                )}
+
+                                <div className="payment-actions">
+                                    <button
+                                        className="btn-approve"
+                                        onClick={() => handleVerify(payment._id, 'approve')}
+                                        disabled={actionLoading[payment._id]}
+                                    >
+                                        {actionLoading[payment._id] === 'approve' ? '...' : '✓ อนุมัติ'}
+                                    </button>
+                                    <button
+                                        className="btn-reject"
+                                        onClick={() => handleVerify(payment._id, 'reject')}
+                                        disabled={actionLoading[payment._id]}
+                                    >
+                                        {actionLoading[payment._id] === 'reject' ? '...' : '✕ ปฏิเสธ'}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="empty-state">
-                    <p>✅ ไม่มีสลิปรอตรวจสอบ</p>
+                    <p>✅ ไม่มีสลิปที่รอตรวจสอบ</p>
                 </div>
             )}
 
-            {/* Slip Preview Modal */}
             {previewSlip && (
                 <div className="slip-modal" onClick={() => setPreviewSlip(null)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <img src={previewSlip.slip_url} alt="Slip Full" />
+                        <div className="payment-info" style={{ marginBottom: '12px' }}>
+                            <div>
+                                <span className="ticket-number-label">ตั๋ว</span>
+                                <span className="ticket-number-value">
+                                    {resolveTicketCode(previewSlip) || `#${String(previewSlip._id).slice(-6).toUpperCase()}`}
+                                </span>
+                            </div>
+                            <span className="passenger-name">{resolvePassengerName(previewSlip)}</span>
+                        </div>
+                        <img src={resolveSlipUrl(previewSlip)} alt="Slip Full" />
                         <div className="modal-actions">
                             <button
                                 className="btn-approve"

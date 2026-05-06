@@ -6,8 +6,10 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const User = require('../models/User');
+const Passenger = require('../models/Passenger');
 const Van = require('../models/Van');
 const Trip = require('../models/Trip');
 const Queue = require('../models/Queue');
@@ -32,9 +34,33 @@ const resolveSlipUrl = (rawUrl, baseUrl) => {
     return `${baseUrl}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
 };
 
+const getPassengerBaseUrl = () => {
+    const baseUrl = process.env.PASSENGER_BASE_URL || process.env.CLIENT_URL || '';
+    return baseUrl ? baseUrl.replace(/\/$/, '') : '';
+};
+
 const getTodayStr = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const normalizeTokens = (value) => {
+    if (!value) {
+        return [];
+    }
+
+    if (Array.isArray(value)) {
+        return value.filter(Boolean);
+    }
+
+    return [value].filter(Boolean);
+};
+
+const uniqueValues = (values) => [...new Set(values.filter(Boolean))];
+
+const getPassengerApiUrl = () => {
+    const baseUrl = process.env.PASSENGER_API_URL || '';
+    return baseUrl ? baseUrl.replace(/\/$/, '') : '';
 };
 
 // ==================== AUTH ====================
@@ -293,6 +319,103 @@ exports.getAvailableTrips = async (req, res) => {
     }
 };
 
+exports.getTripStats = async (req, res) => {
+    try {
+        const { trip_id } = req.params;
+
+        const trip = await Trip.findById(trip_id)
+            .populate('route')
+            .populate('vanRef');
+
+        if (!trip) {
+            return res.status(404).json({ success: false, error: 'Ã Â¹â€žÃ Â¸Â¡Ã Â¹Ë†Ã Â¸Å¾Ã Â¸Å¡Ã Â¸Â£Ã Â¸Â­Ã Â¸Å¡Ã Â¸Â£Ã Â¸â€“' });
+        }
+
+        const allQueues = await Queue.find({
+            trip: trip_id
+        }).sort({ createdAt: 1 });
+
+        const activeQueues = allQueues.filter((queue) => queue.status !== 'cancelled');
+        const cancelledQueues = allQueues.filter((queue) => queue.status === 'cancelled');
+
+        const queueIds = activeQueues.map((queue) => queue._id);
+        const payments = queueIds.length > 0
+            ? await Payment.find({ queue: { $in: queueIds } })
+            : [];
+
+        const today = getTodayStr();
+        const todayStart = new Date(`${today}T00:00:00`);
+        const roundsToday = trip.driverId
+            ? await Trip.countDocuments({
+                driverId: trip.driverId,
+                status: 'completed',
+                completedAt: { $gte: todayStart }
+            })
+            : 0;
+
+        const passengerCount = activeQueues.reduce((sum, queue) => sum + (queue.seatCount || 1), 0);
+        const checkedInCount = activeQueues
+            .filter((queue) => queue.status === 'checked_in')
+            .reduce((sum, queue) => sum + (queue.seatCount || 1), 0);
+        const pendingCount = activeQueues
+            .filter((queue) => ['pending', 'confirmed', 'acknowledged'].includes(queue.status))
+            .reduce((sum, queue) => sum + (queue.seatCount || 1), 0);
+        const cancelledCount = cancelledQueues
+            .reduce((sum, queue) => sum + (queue.seatCount || 1), 0);
+
+        const paymentSummary = payments.reduce((acc, payment) => {
+            acc[payment.status] = (acc[payment.status] || 0) + 1;
+            return acc;
+        }, { pending: 0, verified: 0, rejected: 0 });
+
+        const unpaidBookings = await Booking.find({
+            tripId: trip_id,
+            paymentStatus: 'pending',
+            status: { $ne: 'cancelled' }
+        });
+
+        const stats = {
+            trip_id: trip._id,
+            driver_id: trip.driverId,
+            status: trip.status,
+            departure_time: trip.departureTime,
+            actual_departure_time: trip.actualDepartureTime,
+            arrival_time: trip.arrivalTime,
+            completed_at: trip.completedAt,
+            route: trip.route,
+            van: trip.vanRef ? {
+                van_id: trip.vanRef._id,
+                plate_number: trip.vanRef.plate_number,
+                status: trip.vanRef.status,
+                seat_capacity: trip.vanRef.seat_capacity
+            } : null,
+            seat_capacity: trip.seatCapacity,
+            available_seats: trip.availableSeats,
+            total_passengers: passengerCount,
+            checked_in_passengers: checkedInCount,
+            pending_passengers: pendingCount,
+            cancelled_passengers: cancelledCount,
+            rounds_today: roundsToday,
+            payment_summary: {
+                pending: paymentSummary.pending + unpaidBookings.length,
+                verified: paymentSummary.verified,
+                rejected: paymentSummary.rejected,
+                unpaid_bookings: unpaidBookings.length
+            }
+        };
+
+        res.json({
+            success: true,
+            trip,
+            stats,
+            summary: stats
+        });
+    } catch (error) {
+        console.error('[TripStats Error]', error);
+        res.status(500).json({ success: false, error: 'Ã Â¸â€Ã Â¸Â¶Ã Â¸â€¡Ã Â¸â€šÃ Â¹â€°Ã Â¸Â­Ã Â¸Â¡Ã Â¸Â¹Ã Â¸Â¥Ã Â¸â€žÃ Â¸â€œÃ Â¸ÂªÃ Â¸Â–Ã Â¸Â²Ã Â¸â€œÃ Â¸Â°Ã Â¸Â£Ã Â¸â€“Ã Â¹â€°Ã Â¸Â¡Ã Â¹â‚¬Ã Â¸Â«Ã Â¸Â¥Ã Â¸Â§' });
+    }
+};
+
 exports.getRoutes = async (req, res) => {
     try {
         const routes = await Route.find();
@@ -472,7 +595,7 @@ exports.getPendingPayments = async (req, res) => {
             .populate({
                 path: 'queue',
                 match: { trip: trip_id, status: { $nin: ['cancelled', 'expired'] } },
-                select: 'passengerName queueType paymentStatus trip'
+                select: 'passengerName queueType paymentStatus trip ticketCode'
             })
             .sort({ createdAt: 1 });
 
@@ -488,6 +611,7 @@ exports.getPendingPayments = async (req, res) => {
             ...pendingQueues.map(q => ({
                 _id: q._id,
                 source: 'queue',
+                ticket_code: q.ticketCode || `TK-${String(q._id).slice(-6).toUpperCase()}`,
                 passenger_name: q.passengerName || 'à¹„à¸¡à¹ˆà¸£à¸°à¸šà¸¸à¸Šà¸·à¹ˆà¸­',
                 amount: 0,
                 slip_url: null,
@@ -499,6 +623,7 @@ exports.getPendingPayments = async (req, res) => {
                 .map(p => ({
                     _id: p._id,
                     source: 'payment',
+                    ticket_code: p.queue?.ticketCode || `TK-${String(p.queue?._id || p._id).slice(-6).toUpperCase()}`,
                     passenger_name: p.queue?.passengerName || 'ไม่ระบุชื่อ',
                     amount: p.amount || 0,
                     slip_url: resolveSlipUrl(p.slipUrl, passengerBaseUrl),
@@ -507,13 +632,16 @@ exports.getPendingPayments = async (req, res) => {
                     payment_status: p.status,
                     queue_id: p.queue ? {
                         _id: p.queue._id,
-                        passenger_name: p.queue.passengerName
+                        passenger_name: p.queue.passengerName,
+                        ticket_code: p.queue.ticketCode || `TK-${String(p.queue._id).slice(-6).toUpperCase()}`
                     } : null
                 })),
             ...pendingBookings.map(b => ({
                 _id: b._id,
                 source: 'booking',
+                ticket_code: b.seatNumber ? `S-${String(b.seatNumber).padStart(2, '0')}` : `BK-${String(b._id).slice(-6).toUpperCase()}`,
                 passenger_name: b.passengerName || 'à¹„à¸¡à¹ˆà¸£à¸°à¸šà¸¸à¸Šà¸·à¹ˆà¸­',
+                seat_number: b.seatNumber,
                 amount: 0,
                 slip_url: b.paymentSlip ? `/uploads/slips/${b.paymentSlip}` : null,
                 payment_status: b.paymentStatus
@@ -900,6 +1028,7 @@ exports.cancelPassenger = async (req, res) => {
 exports.sendDepartureNotification = async (req, res) => {
     try {
         const { trip_id } = req.params;
+        const trip = await Trip.findById(trip_id).populate('route');
 
         // 1. Socket.IO: Real-time notification
         const io = req.app.get('io');
@@ -910,31 +1039,40 @@ exports.sendDepartureNotification = async (req, res) => {
             });
         }
 
-        // 2. FCM: Push notification to passenger devices
-        let fcmSent = 0;
+        // 2. Bridge to passenger backend socket banner
+        const passengerApiUrl = getPassengerApiUrl();
+        const departureSecret = process.env.DEPARTURE_NOTIFY_SECRET || '';
+        let bridgeDelivered = false;
         try {
-            const { sendToDevice } = require('../services/notificationService');
-            const passengers = await Queue.find({
-                trip: trip_id,
-                status: { $in: ['active', 'pending', 'confirmed'] }
-            });
-
-            for (const p of passengers) {
-                if (p.fcmToken) {
-                    await sendToDevice(
-                        p.fcmToken,
-                        '🚐 รถตู้ถึงท่ารถแล้ว',
-                        'กรุณาเตรียมตัวขึ้นรถ',
-                        { type: 'departure_notify', tripId: trip_id }
-                    );
-                    fcmSent++;
-                }
+            if (!passengerApiUrl) {
+                throw new Error('PASSENGER_API_URL is not configured');
             }
-        } catch (fcmErr) {
-            // FCM disabled or not configured — socket-only is fine
+
+            const response = await axios.post(
+                `${passengerApiUrl}/internal/notifications/departure`,
+                {
+                    trip_id,
+                    title: '🚐 รถตู้กำลังจะออกแล้ว',
+                    message: 'กรุณาเตรียมตัวขึ้นรถ',
+                    route: trip?.route?.route_name || null,
+                    departure_time: trip?.departureTime || null
+                },
+                {
+                    headers: departureSecret ? { 'x-departure-secret': departureSecret } : undefined,
+                    timeout: 10000
+                }
+            );
+
+            bridgeDelivered = !!response.data?.success;
+        } catch (bridgeErr) {
+            console.error('[Departure Notify Bridge Error]', bridgeErr.message);
         }
 
-        res.json({ success: true, notifications_sent: true, fcm_sent: fcmSent });
+        res.json({
+            success: true,
+            notifications_sent: true,
+            bridge_sent: bridgeDelivered
+        });
     } catch (error) {
         console.error('[Notify Error]', error);
         res.status(500).json({ success: false, error: 'ส่งการแจ้งเตือนล้มเหลว' });

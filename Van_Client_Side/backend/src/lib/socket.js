@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.emitPaymentUpdate = exports.emitQueueUpdate = exports.emitTripAvailability = exports.initSocket = void 0;
+exports.emitPaymentUpdate = exports.emitQueueUpdate = exports.emitDepartureAlert = exports.emitTripAvailability = exports.initSocket = void 0;
 const socket_io_1 = require("socket.io");
 const Trip_1 = require("../models/Trip");
 let io = null;
@@ -46,6 +46,14 @@ const emitTripAvailability = async (tripId) => {
     });
 };
 exports.emitTripAvailability = emitTripAvailability;
+const emitDepartureAlert = (payload) => ensureIO().to(tripRoom(payload.tripId)).emit("departure:alert", {
+    trip_id: payload.tripId,
+    title: payload.title,
+    message: payload.message,
+    route: payload.route || null,
+    departure_time: payload.departureTime || null,
+});
+exports.emitDepartureAlert = emitDepartureAlert;
 const emitQueueUpdate = (payload) => ensureIO().to(passengerRoom(payload.passengerId)).emit("queue:updated", payload);
 exports.emitQueueUpdate = emitQueueUpdate;
 const emitPaymentUpdate = (payload) => ensureIO().to(passengerRoom(payload.passengerId)).emit("payment:updated", payload);

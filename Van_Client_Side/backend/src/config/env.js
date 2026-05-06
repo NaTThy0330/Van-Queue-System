@@ -23,6 +23,7 @@ const baseConfig = {
     unpaidCutoffMinutes: Number(process.env.UNPAID_CUTOFF_MINUTES || 10),
     paidLateMinutes: Number(process.env.PAID_LATE_MINUTES || 5),
     uploadDir: process.env.UPLOAD_DIR || path_1.default.join(process.cwd(), "uploads"),
+    departureNotifySecret: process.env.DEPARTURE_NOTIFY_SECRET || "",
 };
 if (process.env.FCM_SERVER_KEY) {
     baseConfig.fcmServerKey = process.env.FCM_SERVER_KEY;
