@@ -1,4 +1,4 @@
-﻿/**
+/**
  * System Initialization
  * Auto-creates fixed routes and daily trips on server start
  */
@@ -10,24 +10,30 @@ const Trip = require('../models/Trip');
 const ROUTE_DEFINITIONS = [
     {
         routeCode: 'route_mochit',
-        routeName: 'ธรรมศาสตร์ รังสิต -> หมอชิต',
-        origin: 'ธรรมศาสตร์ รังสิต',
+        routeName: 'มธ. ศูนย์รังสิต → หมอชิต',
+        origin: 'มธ. ศูนย์รังสิต',
         destination: 'หมอชิต',
-        durationMinutes: 45
+        durationMinutes: 45,
+        destinationLat: 13.8027,
+        destinationLng: 100.5535
     },
     {
         routeCode: 'route_victory',
-        routeName: 'ธรรมศาสตร์ รังสิต -> อนุสาวรีย์',
-        origin: 'ธรรมศาสตร์ รังสิต',
-        destination: 'อนุสาวรีย์',
-        durationMinutes: 50
+        routeName: 'มธ. ศูนย์รังสิต → อนุสาวรีย์ชัยฯ',
+        origin: 'มธ. ศูนย์รังสิต',
+        destination: 'อนุสาวรีย์ชัยสมรภูมิ',
+        durationMinutes: 50,
+        destinationLat: 13.7649,
+        destinationLng: 100.5382
     },
     {
         routeCode: 'route_future',
-        routeName: 'ธรรมศาสตร์ รังสิต -> ฟิวเจอร์พาร์ค',
-        origin: 'ธรรมศาสตร์ รังสิต',
-        destination: 'ฟิวเจอร์พาร์ค',
-        durationMinutes: 30
+        routeName: 'มธ. ศูนย์รังสิต → ฟิวเจอร์พาร์ค รังสิต',
+        origin: 'มธ. ศูนย์รังสิต',
+        destination: 'ฟิวเจอร์พาร์ค รังสิต',
+        durationMinutes: 30,
+        destinationLat: 13.9901,
+        destinationLng: 100.6154
     }
 ];
 
@@ -42,7 +48,9 @@ const initRoutes = async () => {
                     $set: {
                         routeCode: def.routeCode,
                         routeName: def.routeName,
-                        durationMinutes: def.durationMinutes
+                        durationMinutes: def.durationMinutes,
+                        destinationLat: def.destinationLat,
+                        destinationLng: def.destinationLng
                     },
                     $setOnInsert: {
                         origin: def.origin,

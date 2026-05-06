@@ -56,7 +56,7 @@ export default function Depart({ trip, onDeparted, onBack }) {
                         lng: pos.coords.longitude
                     };
                 } catch (e) {
-                    console.log('Could not get location');
+                    // Location unavailable
                 }
             }
 

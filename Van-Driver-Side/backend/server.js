@@ -104,20 +104,20 @@ app.get('/api', (req, res) => {
 
 // Socket.IO
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+
 
   socket.on('join-trip', (tripId) => {
     socket.join(`trip-${tripId}`);
-    console.log(`Socket ${socket.id} joined trip-${tripId}`);
+
   });
 
   socket.on('leave-trip', (tripId) => {
     socket.leave(`trip-${tripId}`);
-    console.log(`Socket ${socket.id} left trip-${tripId}`);
+
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+
   });
 });
 

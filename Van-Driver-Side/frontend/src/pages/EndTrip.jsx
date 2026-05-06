@@ -58,7 +58,6 @@ export default function EndTrip({ trip, onComplete, onBack }) {
                     const dist = Math.round(distanceMeters(latitude, longitude, destLat, destLng));
                     setDistanceToDestination(dist);
                     setNearDestination(dist <= ARRIVE_RADIUS_M);
-                    console.log(`[GPS] ${dist}m from ${destName} (acc: ${Math.round(accuracy)}m)`);
                 } else {
                     // Fallback: no coords in DB → use accuracy check
                     setNearDestination(accuracy <= 200);

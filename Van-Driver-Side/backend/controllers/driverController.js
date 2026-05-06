@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Driver Controller
  * Auth, Profile, Van Selection, Trips, Walk-in, EndTrip
  */
@@ -901,18 +901,43 @@ exports.sendDepartureNotification = async (req, res) => {
     try {
         const { trip_id } = req.params;
 
+        // 1. Socket.IO: Real-time notification
         const io = req.app.get('io');
         if (io) {
             io.to(`trip-${trip_id}`).emit('notify-departure', {
                 trip_id,
-                message: 'à¸£à¸–à¹ƒà¸à¸¥à¹‰à¸­à¸­à¸à¹à¸¥à¹‰à¸§ à¸à¸£à¸¸à¸“à¸²à¹€à¸•à¸£à¸µà¸¢à¸¡à¸•à¸±à¸§'
+                message: 'รถถึงท่ารถแล้ว กรุณาเตรียมตัวขึ้นรถ'
             });
         }
 
-        res.json({ success: true, notifications_sent: true });
+        // 2. FCM: Push notification to passenger devices
+        let fcmSent = 0;
+        try {
+            const { sendToDevice } = require('../services/notificationService');
+            const passengers = await Queue.find({
+                trip: trip_id,
+                status: { $in: ['active', 'pending', 'confirmed'] }
+            });
+
+            for (const p of passengers) {
+                if (p.fcmToken) {
+                    await sendToDevice(
+                        p.fcmToken,
+                        '🚐 รถตู้ถึงท่ารถแล้ว',
+                        'กรุณาเตรียมตัวขึ้นรถ',
+                        { type: 'departure_notify', tripId: trip_id }
+                    );
+                    fcmSent++;
+                }
+            }
+        } catch (fcmErr) {
+            // FCM disabled or not configured — socket-only is fine
+        }
+
+        res.json({ success: true, notifications_sent: true, fcm_sent: fcmSent });
     } catch (error) {
         console.error('[Notify Error]', error);
-        res.status(500).json({ success: false, error: 'à¸ªà¹ˆà¸‡à¸à¸²à¸£à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™à¸¥à¹‰à¸¡à¹€à¸«à¸¥à¸§' });
+        res.status(500).json({ success: false, error: 'ส่งการแจ้งเตือนล้มเหลว' });
     }
 };
 

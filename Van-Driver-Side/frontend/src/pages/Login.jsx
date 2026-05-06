@@ -22,23 +22,16 @@ export default function Login({ onLogin, onGoToRegister }) {
         setError('');
 
         try {
-            console.log('[Login] Calling API...');
             const data = await loginDriver(phone, password);
-            console.log('[Login] Response:', data);
 
             if (data.success) {
-                console.log('[Login] Success! Saving token and driver...');
                 setToken(data.token);
                 setDriver(data.driver);
-                console.log('[Login] Calling onLogin callback...');
                 onLogin(data.driver);
-                console.log('[Login] onLogin called!');
             } else {
-                console.log('[Login] Failed:', data.error);
                 setError(data.error || 'เข้าสู่ระบบล้มเหลว');
             }
         } catch (err) {
-            console.error('[Login] Error:', err);
             setError(err.response?.data?.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
         } finally {
             setLoading(false);

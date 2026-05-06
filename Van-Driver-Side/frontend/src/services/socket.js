@@ -20,11 +20,11 @@ export const initSocket = () => {
     });
 
     socket.on('connect', () => {
-        console.log('🔌 Socket connected:', socket.id);
+
     });
 
     socket.on('disconnect', () => {
-        console.log('🔌 Socket disconnected');
+
     });
 
     socket.on('connect_error', (error) => {
@@ -44,7 +44,7 @@ export const getSocket = () => {
 export const joinTrip = (tripId) => {
     const s = getSocket();
     s.emit('join-trip', tripId);
-    console.log(`📡 Joined trip room: ${tripId}`);
+
 };
 
 export const leaveTrip = (tripId) => {
