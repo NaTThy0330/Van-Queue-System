@@ -23,25 +23,40 @@ const initializeFirebase = () => {
     try {
         admin = require('firebase-admin');
 
-        // ลองหา service account file
-        const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || './firebase-adminsdk.json';
+        let serviceAccount = null;
 
-        try {
-            const serviceAccount = require(serviceAccountPath);
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount)
-            });
-            messaging = admin.messaging();
-            initialized = true;
-            console.log('✅ Firebase Admin SDK initialized');
-            return true;
-        } catch (fileError) {
-            console.warn('⚠️ Firebase service account not found. Push notifications will be disabled.');
-            console.warn('   To enable: Add firebase-adminsdk.json to backend folder');
+        // Method 1: ENV variable with JSON string (Azure / Cloud)
+        if (process.env.FIREBASE_CREDENTIALS_JSON) {
+            try {
+                serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS_JSON);
+            } catch (parseErr) {
+                console.warn('FIREBASE_CREDENTIALS_JSON is not valid JSON');
+            }
+        }
+
+        // Method 2: File path (Local / Docker)
+        if (!serviceAccount) {
+            const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || './firebase-adminsdk.json';
+            try {
+                serviceAccount = require(credPath);
+            } catch (fileErr) {
+                // File not found
+            }
+        }
+
+        if (!serviceAccount) {
+            console.warn('Firebase credentials not found. Push notifications disabled.');
             return false;
         }
+
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        messaging = admin.messaging();
+        initialized = true;
+        return true;
     } catch (error) {
-        console.warn('⚠️ firebase-admin not installed. Run: npm install firebase-admin');
+        console.warn('firebase-admin not installed. Run: npm install firebase-admin');
         return false;
     }
 };
