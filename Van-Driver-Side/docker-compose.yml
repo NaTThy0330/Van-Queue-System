@@ -31,6 +31,6 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - VITE_API_URL=http://localhost:5000
+      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - driver-backend

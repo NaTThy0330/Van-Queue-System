@@ -16,6 +16,22 @@ const Payment = require('../models/Payment');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'van-queue-secret-key-2026';
 
+const resolveSlipUrl = (rawUrl, baseUrl) => {
+    if (!rawUrl) {
+        return null;
+    }
+
+    if (/^https?:\/\//i.test(rawUrl)) {
+        return rawUrl;
+    }
+
+    if (!baseUrl) {
+        return rawUrl;
+    }
+
+    return `${baseUrl}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+};
+
 const getTodayStr = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -441,7 +457,7 @@ const Booking = require('../models/Booking');
 exports.getPendingPayments = async (req, res) => {
     try {
         const { trip_id } = req.params;
-        const passengerBaseUrl = process.env.PASSENGER_BASE_URL || 'http://localhost:3000';
+        const passengerBaseUrl = getPassengerBaseUrl();
 
         // First try Queue-based approach (current architecture)
         const pendingQueues = await Queue.find({
@@ -485,7 +501,8 @@ exports.getPendingPayments = async (req, res) => {
                     source: 'payment',
                     passenger_name: p.queue?.passengerName || 'ไม่ระบุชื่อ',
                     amount: p.amount || 0,
-                    slip_url: p.slipUrl ? `${passengerBaseUrl}${p.slipUrl}` : null,
+                    slip_url: resolveSlipUrl(p.slipUrl, passengerBaseUrl),
+                    slipUrl: resolveSlipUrl(p.slipUrl, passengerBaseUrl),
                     queue_type: p.queue?.queueType,
                     payment_status: p.status,
                     queue_id: p.queue ? {

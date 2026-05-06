@@ -1,6 +1,7 @@
 try {
-    $env:MONGO_URI="mongodb://localhost:27018/vanbooking?directConnection=true"
-    $env:MONGODB_URI="mongodb://localhost:27018/vanbooking?directConnection=true"
+    $mongoHost = if ($env:MONGO_HOST) { $env:MONGO_HOST } elseif ($env:DB_HOST) { $env:DB_HOST } else { "host.docker.internal" }
+    $env:MONGO_URI="mongodb://$mongoHost:27018/vanbooking?directConnection=true"
+    $env:MONGODB_URI="mongodb://$mongoHost:27018/vanbooking?directConnection=true"
     Write-Host "Resetting Database..."
     node backend/scripts/seed.js
     Write-Host "Database Reset and Seeded Successfully!"

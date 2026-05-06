@@ -24,13 +24,21 @@ RUN npm run build
 # Production stage - serve with nginx
 FROM nginx:alpine
 
+# Add envsubst for runtime config rendering
+RUN apk add --no-cache gettext
+
 # Copy built files
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy runtime config template and entrypoint
+COPY runtime-config.js.template /usr/share/nginx/html/runtime-config.js.template
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/bin/sh", "/docker-entrypoint.sh"]

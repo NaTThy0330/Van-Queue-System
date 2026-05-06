@@ -1,3 +1,5 @@
+import { getApiUrl } from "./env";
+
 const TOKEN_KEY = "van_auth_token";
 
 export type ApiError = {
@@ -6,8 +8,7 @@ export type ApiError = {
 };
 
 const getBaseUrl = () => {
-  const base = import.meta.env.VITE_API_URL;
-  return base && typeof base === "string" ? base.replace(/\/$/, "") : "http://localhost:4000";
+  return getApiUrl();
 };
 
 export const getAuthToken = () => {

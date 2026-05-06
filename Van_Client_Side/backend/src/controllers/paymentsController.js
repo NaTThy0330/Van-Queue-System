@@ -15,6 +15,20 @@ const buildSlipPath = (filename) => {
         return undefined;
     return path_1.default.posix.join("/uploads", filename);
 };
+const buildAbsoluteSlipUrl = (req, filename) => {
+    const slipPath = buildSlipPath(filename);
+    if (!slipPath)
+        return undefined;
+    const forwardedProtoHeader = req.get("x-forwarded-proto");
+    const forwardedHostHeader = req.get("x-forwarded-host");
+    const forwardedProto = forwardedProtoHeader ? forwardedProtoHeader.split(",")[0].trim() : undefined;
+    const forwardedHost = forwardedHostHeader ? forwardedHostHeader.split(",")[0].trim() : undefined;
+    const proto = forwardedProto || req.protocol || "http";
+    const host = forwardedHost || req.get("host");
+    if (!host)
+        return slipPath;
+    return `${proto}://${host}${slipPath}`;
+};
 const uploadPaymentSlip = async (req, res) => {
     if (!req.passenger)
         throw new AppError_1.AppError("Unauthorized", 401);
@@ -31,7 +45,7 @@ const uploadPaymentSlip = async (req, res) => {
             throw new AppError_1.AppError("Payments allowed only for online_paid bookings", 400);
         }
     }
-    const slipUrl = buildSlipPath(req.file?.filename);
+    const slipUrl = buildAbsoluteSlipUrl(req, req.file?.filename);
     if (!slipUrl)
         throw new AppError_1.AppError("Payment slip file is required", 422);
     const payment = await Payment_1.PaymentModel.findOneAndUpdate({ queue: queue._id }, { slipUrl, status: "pending" }, { upsert: true, new: true, setDefaultsOnInsert: true });

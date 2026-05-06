@@ -6,9 +6,13 @@ const Trip_1 = require("../models/Trip");
 let io = null;
 const tripRoom = (tripId) => `trip:${tripId}`;
 const passengerRoom = (passengerId) => `passenger:${passengerId}`;
+const allowedOrigins = (process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 const initSocket = (server) => {
     io = new socket_io_1.Server(server, {
-        cors: { origin: "*" },
+        cors: { origin: allowedOrigins.length > 0 ? allowedOrigins : "*" },
         transports: ["websocket", "polling"],
     });
     io.on("connection", (socket) => {

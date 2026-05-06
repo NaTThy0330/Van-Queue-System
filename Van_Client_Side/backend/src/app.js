@@ -10,7 +10,15 @@ const routes_1 = __importDefault(require("./routes"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const env_1 = require("./config/env");
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
+
+const allowedOrigins = (process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use((0, cors_1.default)({
+    origin: allowedOrigins.length > 0 ? allowedOrigins : "*",
+}));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, morgan_1.default)("dev"));

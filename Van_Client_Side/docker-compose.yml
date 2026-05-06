@@ -10,7 +10,7 @@ services:
       - ./routes.json:/docker-entrypoint-initdb.d/routes.json
       - ./trips.json:/docker-entrypoint-initdb.d/trips.json
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' localhost:27017/test | grep 1"]
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' 127.0.0.1:27017/test | grep 1"]
       interval: 5s
       timeout: 5s
       retries: 30

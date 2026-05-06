@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { api, clearAuthToken, getAuthToken, setAuthToken } from "@/app/lib/api";
 
-export type BookingStatus = "waiting" | "unpaid" | "confirmed" | "expired" | "cancelled";
+export type BookingStatus = "waiting" | "unpaid" | "confirmed" | "completed" | "expired" | "cancelled";
 
 export interface User {
   id: string;
@@ -152,9 +152,11 @@ const mapQueueStatus = (queue: any): BookingStatus => {
   const status = queue?.status;
   const paymentStatus = queue?.paymentStatus;
   const queueType = queue?.queueType;
+  const tripStatus = queue?.trip?.status;
 
   if (status === "cancelled") return "cancelled";
   if (status === "expired" || status === "no_show") return "expired";
+  if (status === "completed" || tripStatus === "completed") return "completed";
   if (status === "confirmed" || status === "checked_in" || status === "acknowledged") return "confirmed";
 
   if (status === "pending") {

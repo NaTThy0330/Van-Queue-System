@@ -3,8 +3,9 @@
  */
 import { io } from 'socket.io-client';
 import { getToken } from './auth';
+import { getApiUrl } from './env';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : `http://${window.location.hostname}:5000`);
+const SOCKET_URL = getApiUrl();
 
 let socket = null;
 

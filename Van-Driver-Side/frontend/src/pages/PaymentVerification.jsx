@@ -5,7 +5,16 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { getPendingPayments, verifyPayment } from '../services/api';
+import { getApiUrl } from '../services/env';
 import './PaymentVerification.css';
+
+const resolveSlipUrl = (payment) => {
+    const raw = payment?.slip_url || payment?.slipUrl || payment?.payment_slip || null;
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const baseUrl = getApiUrl();
+    return `${baseUrl}${raw.startsWith('/') ? '' : '/'}${raw}`;
+};
 
 export default function PaymentVerification({ trip, onBack }) {
     const [payments, setPayments] = useState([]);
