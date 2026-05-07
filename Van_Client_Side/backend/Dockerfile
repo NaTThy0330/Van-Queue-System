@@ -9,6 +9,7 @@ COPY . .
 
 ENV NODE_ENV=production
 ENV PORT=4000
+ENV TZ=Asia/Bangkok
 
 EXPOSE 4000
 

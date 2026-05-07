@@ -1068,6 +1068,33 @@ exports.sendDepartureNotification = async (req, res) => {
             console.error('[Departure Notify Bridge Error]', bridgeErr.message);
         }
 
+        // 3. FCM: Push notification to passenger devices
+        let fcmSent = 0;
+        try {
+            const { sendToDevice } = require('../services/notificationService');
+            const passengers = await Queue.find({
+                trip: trip_id,
+                status: { $in: ['pending', 'confirmed', 'checked_in'] }
+            }).populate('passenger');
+
+            for (const q of passengers) {
+                const tokens = q.passenger?.fcmTokens || [];
+                for (const token of tokens) {
+                    if (token) {
+                        await sendToDevice(
+                            token,
+                            'รถตู้ถึงท่ารถแล้ว',
+                            'กรุณาเตรียมตัวขึ้นรถ',
+                            { type: 'departure_notify', tripId: trip_id }
+                        );
+                        fcmSent++;
+                    }
+                }
+            }
+        } catch (fcmErr) {
+            // FCM not configured — socket-only fallback
+        }
+
         res.json({
             success: true,
             notifications_sent: true,

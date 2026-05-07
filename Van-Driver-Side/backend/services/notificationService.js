@@ -70,7 +70,7 @@ const initializeFirebase = () => {
  */
 const sendToDevice = async (fcmToken, title, body, data = {}) => {
     if (!initializeFirebase()) {
-        console.log(`📱 [Mock] Notification: ${title} - ${body}`);
+
         return { success: false, message: 'Firebase not configured' };
     }
 
@@ -103,7 +103,7 @@ const sendToDevice = async (fcmToken, title, body, data = {}) => {
         };
 
         const response = await messaging.send(message);
-        console.log(`✅ Notification sent: ${response}`);
+
         return { success: true, messageId: response };
     } catch (error) {
         console.error('❌ Send notification error:', error.message);
@@ -120,7 +120,7 @@ const sendToDevice = async (fcmToken, title, body, data = {}) => {
  */
 const sendToMultipleDevices = async (fcmTokens, title, body, data = {}) => {
     if (!initializeFirebase()) {
-        console.log(`📱 [Mock] Multi-notification to ${fcmTokens.length} devices: ${title}`);
+
         return { success: false, message: 'Firebase not configured' };
     }
 
@@ -138,7 +138,7 @@ const sendToMultipleDevices = async (fcmTokens, title, body, data = {}) => {
         };
 
         const response = await messaging.sendEachForMulticast(message);
-        console.log(`✅ Multi-notification sent: ${response.successCount} success, ${response.failureCount} failed`);
+
         return {
             success: true,
             successCount: response.successCount,
@@ -159,7 +159,7 @@ const sendToMultipleDevices = async (fcmTokens, title, body, data = {}) => {
  */
 const sendToTopic = async (topic, title, body, data = {}) => {
     if (!initializeFirebase()) {
-        console.log(`📱 [Mock] Topic notification to '${topic}': ${title}`);
+
         return { success: false, message: 'Firebase not configured' };
     }
 
@@ -177,7 +177,7 @@ const sendToTopic = async (topic, title, body, data = {}) => {
         };
 
         const response = await messaging.send(message);
-        console.log(`✅ Topic notification sent: ${response}`);
+
         return { success: true, messageId: response };
     } catch (error) {
         console.error('❌ Send topic notification error:', error.message);

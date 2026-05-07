@@ -47,7 +47,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Database
 const MONGODB_URI = getMongoUri();
-console.log('Connecting to MongoDB:', MONGODB_URI);
+
 
 const { startAutoCutoffScheduler } = require('./schedulers/autoCutoff');
 const { initSystem } = require('./utils/initSystem');
@@ -132,7 +132,7 @@ const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`Van Queue Server running on port ${PORT}`);
-  console.log('Health: /health');
+
 });
 
 // Graceful Shutdown
