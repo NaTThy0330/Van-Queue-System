@@ -86,7 +86,6 @@ export default function Depart({ trip, onDeparted, onBack }) {
     }
 
     const checkedIn = passengers.filter(p => p.status === 'checked_in');
-    // const totalSeats = trip.total_seats || 13; // Removed as requested
 
     return (
         <div className="depart-container">

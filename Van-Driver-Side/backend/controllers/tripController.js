@@ -79,7 +79,6 @@ exports.updateStatus = async (req, res) => {
 exports.notifyDeparture = async (req, res) => {
     try {
         const { tripId } = req.params;
-        console.log(`[Notify] Departure notification for trip ${tripId}`);
         res.json({ success: true, message: 'Departure notification sent' });
     } catch (error) {
         console.error('[notifyDeparture Error]', error);
@@ -116,7 +115,6 @@ exports.confirmDeparture = async (req, res) => {
 exports.saveCheckinState = async (req, res) => {
     try {
         const { tripId } = req.params;
-        console.log(`[CheckinState] Saved for trip ${tripId}`);
         res.json({ success: true });
     } catch (error) {
         console.error('[saveCheckinState Error]', error);
@@ -127,7 +125,6 @@ exports.saveCheckinState = async (req, res) => {
 exports.runUpQueue = async (req, res) => {
     try {
         const { tripId } = req.params;
-        console.log(`[RunUpQueue] Processing for trip ${tripId}`);
         res.json({ success: true, message: 'Queue processed' });
     } catch (error) {
         console.error('[runUpQueue Error]', error);

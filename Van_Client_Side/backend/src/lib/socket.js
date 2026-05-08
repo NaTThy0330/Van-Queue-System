@@ -57,8 +57,6 @@ const emitDepartureAlert = (payload) => {
     const server = ensureIO();
     // Emit to trip room (passengers who booked this trip)
     server.to(tripRoom(payload.tripId)).emit("departure:alert", alertData);
-    // Also broadcast globally so ALL connected passengers see the alert
-    server.emit("departure:alert", alertData);
 };
 exports.emitDepartureAlert = emitDepartureAlert;
 const emitQueueUpdate = (payload) => ensureIO().to(passengerRoom(payload.passengerId)).emit("queue:updated", payload);

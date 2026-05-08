@@ -135,16 +135,6 @@ const initDailyTrips = async () => {
     try {
         const { todayStart, todayEnd } = getBangkokToday();
 
-        // Check if trips already exist for today (Bangkok time)
-        const existingTrips = await Trip.countDocuments({
-            departureTime: { $gte: todayStart, $lte: todayEnd }
-        });
-
-        if (existingTrips > 0) {
-            console.log(`Schedule already exists: ${existingTrips} trips for today. Skipping.`);
-            return;
-        }
-
         console.log('Generating daily trips (Bangkok timezone)...');
 
         // Load routes
@@ -156,6 +146,7 @@ const initDailyTrips = async () => {
 
         const tripsToInsert = [];
 
+        // Strict static timetable generation - Fill missing slots only
         for (const sched of SCHEDULE) {
             const route = routeMap[sched.routeCode];
             if (!route) continue;
@@ -164,15 +155,25 @@ const initDailyTrips = async () => {
             let m = sched.startM;
 
             while (h < sched.endH || (h === sched.endH && m <= sched.endM)) {
-                tripsToInsert.push({
+                const tripTime = bangkokTime(h, m);
+
+                // Check if this exact slot already exists to prevent overwriting booked trips
+                const exists = await Trip.exists({
                     route: route._id,
-                    departureTime: bangkokTime(h, m),
-                    seatCapacity: 13,
-                    availableSeats: 13,
-                    status: 'scheduled',
-                    vanRef: null,
-                    driverId: null
+                    departureTime: tripTime
                 });
+
+                if (!exists) {
+                    tripsToInsert.push({
+                        route: route._id,
+                        departureTime: tripTime,
+                        seatCapacity: 13,
+                        availableSeats: 13,
+                        status: 'scheduled',
+                        vanRef: null,
+                        driverId: null
+                    });
+                }
 
                 // Advance by interval
                 m += sched.interval;
@@ -185,13 +186,9 @@ const initDailyTrips = async () => {
 
         if (tripsToInsert.length > 0) {
             await Trip.insertMany(tripsToInsert);
-            console.log(`Generated ${tripsToInsert.length} trips for today.`);
-
-            // Log first and last trip to verify times
-            const first = tripsToInsert[0].departureTime;
-            const last = tripsToInsert[tripsToInsert.length - 1].departureTime;
-            console.log(`  First: ${first.toISOString()} (${first.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })})`);
-            console.log(`  Last:  ${last.toISOString()} (${last.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })})`);
+            console.log(`Generated ${tripsToInsert.length} missing trips for today.`);
+        } else {
+            console.log('All 89 slots for today already exist. No new trips generated.');
         }
     } catch (error) {
         console.error('Init Error (Trips):', error);

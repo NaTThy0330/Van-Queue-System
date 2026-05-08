@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppStore } from "./store";
 import { onDepartureAlert, syncDepartureTripSubscriptions, disconnectPassengerSocket } from "./lib/passengerSocket";
-import { onDepartureAlert as onDriverDepartureAlert, disconnectDriverSocket } from "./lib/driverSocket";
+import { onDepartureAlert as onDriverDepartureAlert, disconnectDriverSocket, syncDriverTripSubscriptions } from "./lib/driverSocket";
 import { AppLoadingScreen } from "./components/AppLoadingScreen";
 
 export function Root() {
@@ -56,6 +56,7 @@ export function Root() {
   useEffect(() => {
     if (!isLoggedIn) {
       syncDepartureTripSubscriptions([]);
+      syncDriverTripSubscriptions([]);
       return;
     }
 
@@ -69,6 +70,7 @@ export function Root() {
     );
 
     syncDepartureTripSubscriptions(tripIds);
+    syncDriverTripSubscriptions(tripIds);
   }, [bookings, isLoggedIn]);
 
   return (

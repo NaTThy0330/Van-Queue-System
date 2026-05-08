@@ -73,7 +73,7 @@ exports.register = async (req, res) => {
         });
         await newDriver.save();
 
-        console.log(`[Register] New driver: ${phone}`);
+
 
         res.status(201).json({
             success: true,
@@ -118,7 +118,6 @@ exports.login = async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        console.log(`[Login] ${driver.name} (${driver.phone})`);
 
         res.json({
             success: true,
@@ -256,7 +255,6 @@ exports.selectVan = async (req, res) => {
 
         await User.findByIdAndUpdate(driver_id, { vanNumber: normalizedPlate });
 
-        console.log(`[Van Selected] ${normalizedPlate} → Driver: ${driver_id}`);
 
         res.json({
             success: true,
@@ -278,20 +276,17 @@ exports.selectVan = async (req, res) => {
 
 exports.getAvailableTrips = async (req, res) => {
     try {
-        // Bangkok time boundaries for "today"
         const now = new Date();
-        const bangkokNow = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        const bangkokOffset = 7 * 60; // minutes
         
-        const startOfToday = new Date(now);
-        startOfToday.setHours(0, 0, 0, 0); // Local start of day
-        
-        // More robust: use UTC boundaries to match Bangkok 00:00 - 23:59
-        const y = now.getFullYear();
-        const m = now.getMonth();
-        const d = now.getDate();
-        
-        const bkkTodayStart = new Date(Date.UTC(y, m, d, -7, 0, 0));
-        const bkkTodayEnd = new Date(Date.UTC(y, m, d + 1, -7, 0, 0));
+        let bangkokDate = new Date(now);
+        bangkokDate.setUTCMinutes(bangkokDate.getUTCMinutes() + bangkokOffset);
+
+        const year = bangkokDate.getUTCFullYear();
+        const month = bangkokDate.getUTCMonth();
+        const day = bangkokDate.getUTCDate();
+
+        const bkkTodayEnd = new Date(Date.UTC(year, month, day, 23, 59, 59) - bangkokOffset * 60000);
 
         const trips = await Trip.find({
             status: 'scheduled',
@@ -461,7 +456,6 @@ exports.assignTrip = async (req, res) => {
             });
         }
 
-        console.log(`[AssignTrip] Trip ${trip_id} → Driver ${driver_id}`);
 
         res.json({ success: true, trip: populatedTrip });
 
@@ -577,7 +571,6 @@ exports.verifyPayment = async (req, res) => {
                     $set: { paymentStatus: 'paid' }
                 });
 
-                console.log(`[Verify] Payment ${payment_id} approved`);
                 return res.json({ success: true, status: 'approved', source: 'payment' });
             } else {
                 await Payment.updateOne(
@@ -593,7 +586,6 @@ exports.verifyPayment = async (req, res) => {
                     await Trip.findByIdAndUpdate(queue.trip, { $inc: { availableSeats: queue.seatCount || 1 } });
                 }
 
-                console.log(`[Verify] Payment ${payment_id} rejected`);
                 return res.json({ success: true, status: 'rejected', source: 'payment' });
             }
         }
@@ -605,14 +597,12 @@ exports.verifyPayment = async (req, res) => {
                 queue.paymentStatus = 'paid';
                 queue.queueType = 'online_paid';
                 await queue.save();
-                console.log(`[Verify] Queue ${payment_id} approved`);
                 return res.json({ success: true, status: 'approved', source: 'queue' });
             } else {
                 queue.status = 'cancelled';
                 await queue.save();
                 // Restore seat
                 await Trip.findByIdAndUpdate(queue.trip, { $inc: { availableSeats: 1 } });
-                console.log(`[Verify] Queue ${payment_id} rejected`);
                 return res.json({ success: true, status: 'rejected', source: 'queue' });
             }
         }
@@ -624,7 +614,6 @@ exports.verifyPayment = async (req, res) => {
                 booking.type = 'paid';
                 booking.paymentStatus = 'verified';
                 await booking.save();
-                console.log(`[Verify] Booking ${payment_id} approved`);
                 return res.json({ success: true, status: 'approved', source: 'booking' });
             } else {
                 booking.status = 'cancelled';
@@ -632,7 +621,6 @@ exports.verifyPayment = async (req, res) => {
                 await booking.save();
                 // Restore seat
                 await Trip.findByIdAndUpdate(booking.tripId, { $inc: { availableSeats: 1 } });
-                console.log(`[Verify] Booking ${payment_id} rejected`);
                 return res.json({ success: true, status: 'rejected', source: 'booking' });
             }
         }
@@ -829,7 +817,6 @@ exports.quickWalkin = async (req, res) => {
             });
         }
 
-        console.log(`[Walk-in] #${seatNumber} (${ticketCode}), Remaining: ${trip.availableSeats}`);
 
         res.json({
             success: true,
@@ -897,7 +884,6 @@ exports.clearNoShow = async (req, res) => {
             });
         }
 
-        console.log(`[No-show] Trip ${trip_id}: cleared ${pendingQueues.length} passengers, released ${seatsToRelease} seats`);
 
         res.json({
             success: true,
@@ -989,7 +975,6 @@ exports.cancelPassenger = async (req, res) => {
             });
         }
 
-        console.log(`[Cancel] Queue ${queue_id} (${queue.queueType}), Seats: ${updatedTrip?.availableSeats}`);
 
         res.json({
             success: true,
@@ -1031,9 +1016,8 @@ exports.sendDepartureNotification = async (req, res) => {
                 trip_id,
                 message: alertPayload.message
             });
-            // Global broadcast for passenger clients connected to driver backend
-            io.emit('departure:alert', alertPayload);
-            console.log(`[Notify] Trip ${trip_id}: Driver socket alert sent`);
+            // Specific broadcast for passenger clients connected to driver backend
+            io.to(`trip-${trip_id}`).emit('departure:alert', alertPayload);
         }
 
         // 2) Forward to passenger backend via internal API (so passenger socket also broadcasts)
@@ -1055,7 +1039,6 @@ exports.sendDepartureNotification = async (req, res) => {
                     },
                     timeout: 5000
                 });
-                console.log(`[Notify] Trip ${trip_id}: Forwarded to passenger backend OK`);
             } catch (forwardErr) {
                 console.warn('[Notify] Could not forward to passenger backend:', forwardErr.message);
             }
@@ -1094,7 +1077,6 @@ exports.confirmDeparture = async (req, res) => {
             io.to(`trip-${trip_id}`).emit('trip:departed', { trip_id });
         }
 
-        console.log(`[Departed] Trip ${trip_id}`);
 
         res.json({
             success: true,
@@ -1145,7 +1127,6 @@ exports.abandonTrip = async (req, res) => {
         trip.availableSeats = trip.seatCapacity;
         await trip.save();
 
-        console.log(`[Abandon] Trip ${trip_id} released by driver`);
 
         res.json({ success: true, message: 'ยกเลิกรอบรถสำเร็จ' });
     } catch (error) {
@@ -1198,7 +1179,6 @@ exports.completeTrip = async (req, res) => {
             io.to(`trip-${trip_id}`).emit('trip:completed', { trip_id });
         }
 
-        console.log(`[Trip Complete] ${trip_id} | Rounds: ${roundsToday}`);
 
         res.json({
             success: true,
@@ -1372,7 +1352,6 @@ exports.changeVan = async (req, res) => {
 
         await User.findByIdAndUpdate(driver_id, { vanNumber: normalizedPlate });
 
-        console.log(`[Change Van] Driver ${driver_id} → ${normalizedPlate}`);
 
         res.json({
             success: true,

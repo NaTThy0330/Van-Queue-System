@@ -6,6 +6,7 @@ import { io, Socket } from "socket.io-client";
 import { getDriverSocketUrl } from "./env";
 
 let socket: Socket | null = null;
+let joinedDriverTripIds = new Set<string>();
 
 const getDriverBackendUrl = (): string => {
   return getDriverSocketUrl();
@@ -22,6 +23,9 @@ export const initDriverSocket = (): Socket => {
 
   socket.on("connect", () => {
     console.log("[Notification] Connected to driver server");
+    for (const tripId of joinedDriverTripIds) {
+      socket?.emit("join-trip", tripId);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -29,6 +33,25 @@ export const initDriverSocket = (): Socket => {
   });
 
   return socket;
+};
+
+export const syncDriverTripSubscriptions = (tripIds: string[]) => {
+  const s = initDriverSocket();
+  const nextTripIds = new Set(tripIds.filter(Boolean));
+
+  for (const tripId of nextTripIds) {
+    if (!joinedDriverTripIds.has(tripId)) {
+      s.emit("join-trip", tripId);
+    }
+  }
+
+  for (const tripId of joinedDriverTripIds) {
+    if (!nextTripIds.has(tripId)) {
+      s.emit("leave-trip", tripId);
+    }
+  }
+
+  joinedDriverTripIds = nextTripIds;
 };
 
 export const onDepartureAlert = (
