@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useAppStore } from "./store";
 import { onDepartureAlert, syncDepartureTripSubscriptions, disconnectPassengerSocket } from "./lib/passengerSocket";
+import { onDepartureAlert as onDriverDepartureAlert, disconnectDriverSocket } from "./lib/driverSocket";
 import { AppLoadingScreen } from "./components/AppLoadingScreen";
 
 export function Root() {
@@ -35,13 +36,20 @@ export function Root() {
   }, [authReady, isAuthLoading, isLoggedIn, location.pathname, navigate]);
 
   useEffect(() => {
-    const unsub = onDepartureAlert((data) => {
+    const handleAlert = (data: { title: string; message: string }) => {
       setNotification({ title: data.title, message: data.message });
       setTimeout(() => setNotification(null), 8000);
-    });
+    };
+
+    // Listen on BOTH passenger backend socket AND driver backend socket
+    const unsubPassenger = onDepartureAlert(handleAlert);
+    const unsubDriver = onDriverDepartureAlert(handleAlert);
+
     return () => {
-      unsub();
+      unsubPassenger();
+      unsubDriver();
       disconnectPassengerSocket();
+      disconnectDriverSocket();
     };
   }, []);
 

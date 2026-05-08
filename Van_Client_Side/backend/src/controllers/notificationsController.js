@@ -15,13 +15,15 @@ const broadcastDepartureAlert = async (req, res) => {
     if (!tripId) {
         throw new AppError_1.AppError("trip_id is required", 422);
     }
-    (0, socket_1.emitTripDepartureAlert)({
+    // Emit to trip room (passengers who booked this trip)
+    (0, socket_1.emitDepartureAlert)({
         tripId: String(tripId),
         title,
         message,
         route: req.body.route || null,
         departureTime: req.body.departure_time || req.body.departureTime || null,
     });
+    console.log(`[Notify] Departure alert broadcast for trip ${tripId}`);
     res.json({ success: true });
 };
 exports.broadcastDepartureAlert = broadcastDepartureAlert;

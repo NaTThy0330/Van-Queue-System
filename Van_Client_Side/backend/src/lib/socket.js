@@ -46,13 +46,20 @@ const emitTripAvailability = async (tripId) => {
     });
 };
 exports.emitTripAvailability = emitTripAvailability;
-const emitDepartureAlert = (payload) => ensureIO().to(tripRoom(payload.tripId)).emit("departure:alert", {
-    trip_id: payload.tripId,
-    title: payload.title,
-    message: payload.message,
-    route: payload.route || null,
-    departure_time: payload.departureTime || null,
-});
+const emitDepartureAlert = (payload) => {
+    const alertData = {
+        trip_id: payload.tripId,
+        title: payload.title,
+        message: payload.message,
+        route: payload.route || null,
+        departure_time: payload.departureTime || null,
+    };
+    const server = ensureIO();
+    // Emit to trip room (passengers who booked this trip)
+    server.to(tripRoom(payload.tripId)).emit("departure:alert", alertData);
+    // Also broadcast globally so ALL connected passengers see the alert
+    server.emit("departure:alert", alertData);
+};
 exports.emitDepartureAlert = emitDepartureAlert;
 const emitQueueUpdate = (payload) => ensureIO().to(passengerRoom(payload.passengerId)).emit("queue:updated", payload);
 exports.emitQueueUpdate = emitQueueUpdate;

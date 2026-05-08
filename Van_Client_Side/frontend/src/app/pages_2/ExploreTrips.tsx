@@ -63,6 +63,17 @@ const ExploreTrips = () => {
   );
 
   const filteredTrips = trips
+    .filter((trip) => {
+      // Hide trips whose departure time has already passed (client-side fallback)
+      if (!trip.departureTime || trip.departureTime === "-") return false;
+      const match = trip.departureTime.match(/(\d{1,2}):(\d{2})/);
+      if (!match) return true;
+      const [, h, m] = match.map(Number);
+      const now = new Date();
+      const depTime = new Date();
+      depTime.setHours(h, m, 0, 0);
+      return depTime > now;
+    })
     .filter((trip) => origin === "all" || trip.from === origin)
     .filter((trip) => destination === "all" || trip.to === destination)
     .sort((a, b) => {

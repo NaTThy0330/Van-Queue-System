@@ -19,6 +19,11 @@ export default function TripList({ driver, van, onSelectTrip, onBack }) {
 
     const filteredTrips = trips.filter(trip => {
         const routeName = trip.route_id?.route_name || '';
+        
+        // Hide past trips (client-side safety)
+        const depTime = new Date(trip.departure_time);
+        if (depTime < new Date()) return false;
+
         if (activeTab === 'mochit') return routeName.includes('หมอชิต');
         if (activeTab === 'victory') return routeName.includes('อนุสาวรีย์');
         if (activeTab === 'future') return routeName.includes('ฟิวเจอร์');

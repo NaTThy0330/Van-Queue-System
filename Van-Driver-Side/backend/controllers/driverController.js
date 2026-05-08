@@ -7,6 +7,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const User = require('../models/User');
 const Van = require('../models/Van');
@@ -277,9 +278,28 @@ exports.selectVan = async (req, res) => {
 
 exports.getAvailableTrips = async (req, res) => {
     try {
+        // Bangkok time boundaries for "today"
+        const now = new Date();
+        const bangkokNow = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        
+        const startOfToday = new Date(now);
+        startOfToday.setHours(0, 0, 0, 0); // Local start of day
+        
+        // More robust: use UTC boundaries to match Bangkok 00:00 - 23:59
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const d = now.getDate();
+        
+        const bkkTodayStart = new Date(Date.UTC(y, m, d, -7, 0, 0));
+        const bkkTodayEnd = new Date(Date.UTC(y, m, d + 1, -7, 0, 0));
+
         const trips = await Trip.find({
             status: 'scheduled',
-            driverId: null
+            driverId: null,
+            departureTime: { 
+                $gte: now, // Hide past trips
+                $lt: bkkTodayEnd // Only show today
+            }
         })
             .populate('route')
             .populate('vanRef')
@@ -308,6 +328,11 @@ exports.createTrip = async (req, res) => {
 
         if (!driver_id || !route_id || !departure_time) {
             return res.status(400).json({ success: false, error: 'กรุณาระบุ driver_id, route_id และ departure_time' });
+        }
+
+        const departureDate = new Date(departure_time);
+        if (departureDate < new Date()) {
+            return res.status(400).json({ success: false, error: 'ไม่สามารถสร้างรอบรถในเวลาที่ผ่านมาแล้วได้' });
         }
 
         let van;
@@ -986,32 +1011,57 @@ exports.sendDepartureNotification = async (req, res) => {
 
         // Get trip info for notification message
         const trip = await Trip.findById(trip_id).populate('route');
-        const routeName = trip?.route?.route_name || trip?.route?.origin || 'รถตู้';
+        const routeName = trip?.route?.routeName || trip?.route?.route_name || trip?.route?.origin || 'รถตู้';
         const departureTimeStr = trip?.departureTime
-            ? new Date(trip.departureTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+            ? new Date(trip.departureTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' })
             : '';
 
-        // Socket notification to connected clients ONLY
+        const alertPayload = {
+            trip_id,
+            route: routeName,
+            departure_time: departureTimeStr,
+            title: '🚐 รถใกล้ออกแล้ว!',
+            message: `รถ ${routeName} เวลา ${departureTimeStr} น. ใกล้ออกแล้ว กรุณาเตรียมตัวขึ้นรถครับ`
+        };
+
+        // 1) Socket notification on driver backend (direct to driver-side listeners)
         const io = req.app.get('io');
         if (io) {
-            // Room-specific (for driver-side listeners)
             io.to(`trip-${trip_id}`).emit('notify-departure', {
                 trip_id,
-                message: `รถ ${routeName} ใกล้ออกแล้ว กรุณาเตรียมตัวขึ้นรถ`
+                message: alertPayload.message
             });
-            
-            // Global broadcast (for passenger-side listeners)
-            io.emit('departure:alert', {
-                trip_id,
-                route: routeName,
-                departure_time: departureTimeStr,
-                title: '🚐 รถใกล้ออกแล้ว!',
-                message: `รถ ${routeName} เวลา ${departureTimeStr} น. ใกล้ออกแล้ว กรุณาเตรียมตัวขึ้นรถครับ`
-            });
-            console.log(`[Notify] Trip ${trip_id}: Socket.io alert sent`);
+            // Global broadcast for passenger clients connected to driver backend
+            io.emit('departure:alert', alertPayload);
+            console.log(`[Notify] Trip ${trip_id}: Driver socket alert sent`);
         }
 
-        res.json({ success: true, notifications_sent: true, method: 'socket_only' });
+        // 2) Forward to passenger backend via internal API (so passenger socket also broadcasts)
+        const passengerApiUrl = process.env.PASSENGER_API_URL;
+        if (passengerApiUrl) {
+            try {
+                const departureSecret = process.env.DEPARTURE_NOTIFY_SECRET || '';
+                await axios.post(`${passengerApiUrl}/api/internal/notifications/departure`, {
+                    trip_id,
+                    tripId: trip_id,
+                    title: alertPayload.title,
+                    message: alertPayload.message,
+                    route: routeName,
+                    departure_time: departureTimeStr
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-departure-secret': departureSecret
+                    },
+                    timeout: 5000
+                });
+                console.log(`[Notify] Trip ${trip_id}: Forwarded to passenger backend OK`);
+            } catch (forwardErr) {
+                console.warn('[Notify] Could not forward to passenger backend:', forwardErr.message);
+            }
+        }
+
+        res.json({ success: true, notifications_sent: true, method: 'socket_and_forward' });
     } catch (error) {
         console.error('[Notify Error]', error);
         res.status(500).json({ success: false, error: 'ส่งการแจ้งเตือนล้มเหลว' });
