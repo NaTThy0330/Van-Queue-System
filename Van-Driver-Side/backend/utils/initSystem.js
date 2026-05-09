@@ -6,46 +6,10 @@
 
 const Route = require('../models/Route');
 const Trip = require('../models/Trip');
-
-// ==================== TIMEZONE-SAFE HELPERS ====================
-
-/**
- * Get Bangkok "today" boundaries regardless of system TZ
- * Returns { todayStart, todayEnd } as Date objects in UTC
- * that correspond to 00:00 and 23:59:59 Bangkok time
- */
-const getBangkokToday = () => {
-    const now = new Date();
-    // Bangkok is UTC+7 — always (no DST)
-    const bangkokOffset = 7 * 60; // minutes
-    const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
-    const bangkokMinutes = utcMinutes + bangkokOffset;
-
-    // Bangkok date components
-    let bangkokDate = new Date(now);
-    bangkokDate.setUTCMinutes(bangkokDate.getUTCMinutes() + bangkokOffset);
-
-    const year = bangkokDate.getUTCFullYear();
-    const month = bangkokDate.getUTCMonth();
-    const day = bangkokDate.getUTCDate();
-
-    // todayStart = 00:00 Bangkok = 17:00 UTC (previous day)
-    const todayStart = new Date(Date.UTC(year, month, day, 0, 0, 0) - bangkokOffset * 60000);
-    // todayEnd = 23:59:59 Bangkok
-    const todayEnd = new Date(Date.UTC(year, month, day, 23, 59, 59) - bangkokOffset * 60000);
-
-    return { todayStart, todayEnd, year, month, day };
-};
-
-/**
- * Create a Date for a specific Bangkok time today
- * e.g., bangkokTime(5, 30) = today at 05:30 Bangkok time
- */
-const bangkokTime = (hour, minute) => {
-    const { year, month, day } = getBangkokToday();
-    // Bangkok hour:minute → UTC
-    return new Date(Date.UTC(year, month, day, hour - 7, minute, 0));
-};
+const {
+    getBangkokDateTime,
+    getBangkokTodayString
+} = require('./bangkokTime');
 
 // ==================== ROUTE DEFINITIONS ====================
 
@@ -133,8 +97,6 @@ const initRoutes = async () => {
 
 const initDailyTrips = async () => {
     try {
-        const { todayStart, todayEnd } = getBangkokToday();
-
         console.log('Generating daily trips (Bangkok timezone)...');
 
         // Load routes
@@ -155,7 +117,7 @@ const initDailyTrips = async () => {
             let m = sched.startM;
 
             while (h < sched.endH || (h === sched.endH && m <= sched.endM)) {
-                const tripTime = bangkokTime(h, m);
+                const tripTime = getBangkokDateTime(h, m);
 
                 // Check if this exact slot already exists to prevent overwriting booked trips
                 const exists = await Trip.exists({
@@ -199,19 +161,18 @@ const initDailyTrips = async () => {
 
 const resetDailyBindings = async () => {
     try {
-        const d = new Date();
-        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const today = getBangkokTodayString();
 
         const Van = require('../models/Van');
 
         const result = await Van.updateMany(
             {
-                current_driverId: { $ne: null },
+                current_driver_id: { $ne: null },
                 last_active_date: { $ne: today }
             },
             {
                 $set: {
-                    current_driverId: null,
+                    current_driver_id: null,
                     driverId: null,
                     status: 'available',
                     last_active_date: null

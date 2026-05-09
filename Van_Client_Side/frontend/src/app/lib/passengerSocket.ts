@@ -23,6 +23,10 @@ const ensureSocket = () => {
     }
   });
 
+  socket.on("connect_error", (error) => {
+    console.error("[Notification] Passenger socket connect_error:", error.message);
+  });
+
   return socket;
 };
 

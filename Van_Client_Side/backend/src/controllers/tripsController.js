@@ -32,7 +32,6 @@ const listTrips = async (req, res) => {
     const routeId = typeof req.query.route_id === "string" ? req.query.route_id : undefined;
     const date = typeof req.query.date === "string" ? req.query.date : undefined;
     const statusParam = typeof req.query.status === "string" ? req.query.status : "scheduled";
-    const includeUnassigned = req.query.include_unassigned === "true" || req.query.include_unassigned === "1";
     const filter = {};
     if (routeId) {
         filter.route = routeId;
@@ -40,9 +39,8 @@ const listTrips = async (req, res) => {
     if (statusParam) {
         filter.status = statusParam;
     }
-    if (!includeUnassigned) {
-        filter.driverId = { $ne: null };
-    }
+    // Only show trips that have a driver assigned
+    filter.driverId = { $ne: null };
     if (date) {
         filter.departureTime = parseDateRange(date);
     }

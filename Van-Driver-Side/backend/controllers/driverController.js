@@ -16,13 +16,15 @@ const Queue = require('../models/Queue');
 const Route = require('../models/Route');
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
+const {
+    getBangkokDayRange,
+    getBangkokTodayString,
+    getBangkokDateTime
+} = require('../utils/bangkokTime');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'van-queue-secret-key-2026';
 
-const getTodayStr = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
+const getTodayStr = () => getBangkokTodayString();
 
 /**
  * Generate a unique ticket code
@@ -139,6 +141,7 @@ exports.login = async (req, res) => {
 exports.getProfile = async (req, res) => {
     try {
         const driverId = req.driver?.id || req.params.id;
+        const { start: todayStart, end: todayEnd } = getBangkokDayRange();
 
         const driver = await User.findById(driverId);
         if (!driver) {
@@ -147,10 +150,16 @@ exports.getProfile = async (req, res) => {
 
         const van = await Van.findOne({ driver_id: driverId });
 
-        const currentTrip = await Trip.findOne({
+        const currentTrip = await Trip.find({
             driverId,
-            status: { $in: ['scheduled', 'departed'] }
-        }).populate('route');
+            status: { $in: ['scheduled', 'departed'] },
+            departureTime: { $gte: todayStart, $lte: todayEnd }
+        })
+            .populate('route')
+            .populate('vanRef')
+            .sort({ status: 1, departureTime: 1 });
+
+        const activeTrip = currentTrip.length > 0 ? currentTrip[0] : null;
 
         res.json({
             success: true,
@@ -166,11 +175,12 @@ exports.getProfile = async (req, res) => {
                 plate_number: van.plate_number,
                 seat_capacity: van.seat_capacity || 13
             } : null,
-            current_trip: currentTrip ? {
-                trip_id: currentTrip._id,
-                route: currentTrip.route,
-                departure_time: currentTrip.departureTime,
-                status: currentTrip.status
+            current_trip: activeTrip ? {
+                trip_id: activeTrip._id,
+                route: activeTrip.route,
+                van: activeTrip.vanRef,
+                departure_time: activeTrip.departureTime,
+                status: activeTrip.status
             } : null
         });
 
@@ -277,23 +287,19 @@ exports.selectVan = async (req, res) => {
 exports.getAvailableTrips = async (req, res) => {
     try {
         const now = new Date();
-        const bangkokOffset = 7 * 60; // minutes
-        
-        let bangkokDate = new Date(now);
-        bangkokDate.setUTCMinutes(bangkokDate.getUTCMinutes() + bangkokOffset);
+        const bookingOpen = getBangkokDateTime(5, 0);
+        const { end: bkkTodayEnd } = getBangkokDayRange();
 
-        const year = bangkokDate.getUTCFullYear();
-        const month = bangkokDate.getUTCMonth();
-        const day = bangkokDate.getUTCDate();
-
-        const bkkTodayEnd = new Date(Date.UTC(year, month, day, 23, 59, 59) - bangkokOffset * 60000);
+        if (now < bookingOpen) {
+            return res.json({ success: true, trips: [] });
+        }
 
         const trips = await Trip.find({
             status: 'scheduled',
             driverId: null,
-            departureTime: { 
-                $gte: now, // Hide past trips
-                $lt: bkkTodayEnd // Only show today
+            departureTime: {
+                $gte: now,
+                $lt: bkkTodayEnd
             }
         })
             .populate('route')
@@ -639,10 +645,12 @@ exports.verifyPayment = async (req, res) => {
 exports.getCurrentTrip = async (req, res) => {
     try {
         const { driver_id } = req.params;
+        const { start: todayStart, end: todayEnd } = getBangkokDayRange();
 
         const trips = await Trip.find({
             driverId: driver_id,
-            status: { $in: ['scheduled', 'departed'] }
+            status: { $in: ['scheduled', 'departed'] },
+            departureTime: { $gte: todayStart, $lte: todayEnd }
         })
             .populate('route')
             .populate('vanRef')
@@ -1025,7 +1033,7 @@ exports.sendDepartureNotification = async (req, res) => {
         if (passengerApiUrl) {
             try {
                 const departureSecret = process.env.DEPARTURE_NOTIFY_SECRET || '';
-                await axios.post(`${passengerApiUrl}/api/internal/notifications/departure`, {
+                await axios.post(`${passengerApiUrl}/internal/notifications/departure`, {
                     trip_id,
                     tripId: trip_id,
                     title: alertPayload.title,
@@ -1159,8 +1167,7 @@ exports.completeTrip = async (req, res) => {
         }
 
         // Count today's rounds
-        const today = getTodayStr();
-        const todayStart = new Date(today + 'T00:00:00');
+        const { start: todayStart } = getBangkokDayRange();
         const roundsToday = await Trip.countDocuments({
             driverId: trip.driverId,
             status: 'completed',
@@ -1208,8 +1215,7 @@ exports.completeTrip = async (req, res) => {
 exports.getShiftStatus = async (req, res) => {
     try {
         const { driver_id } = req.params;
-        const today = getTodayStr();
-        const todayStart = new Date(today + 'T00:00:00');
+        const { dateKey: today, start: todayStart, end: todayEnd } = getBangkokDayRange();
 
         const van = await Van.findOne({
             current_driver_id: driver_id,
@@ -1224,7 +1230,8 @@ exports.getShiftStatus = async (req, res) => {
 
         const activeTrip = await Trip.findOne({
             driverId: driver_id,
-            status: { $in: ['scheduled', 'departed'] }
+            status: { $in: ['scheduled', 'departed'] },
+            departureTime: { $gte: todayStart, $lte: todayEnd }
         }).populate('route').populate('vanRef');
 
         res.json({

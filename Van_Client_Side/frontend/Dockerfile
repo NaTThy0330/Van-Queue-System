@@ -8,11 +8,18 @@ RUN npm ci
 COPY . .
 
 ARG VITE_API_URL=http://localhost:4000
+ARG VITE_DRIVER_SOCKET_URL=http://localhost:5000
 ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_DRIVER_SOCKET_URL=${VITE_DRIVER_SOCKET_URL}
 
 RUN npm run build
 
 FROM nginx:alpine
+
+ARG VITE_API_URL=http://localhost:4000
+ARG VITE_DRIVER_SOCKET_URL=http://localhost:5000
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_DRIVER_SOCKET_URL=${VITE_DRIVER_SOCKET_URL}
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf

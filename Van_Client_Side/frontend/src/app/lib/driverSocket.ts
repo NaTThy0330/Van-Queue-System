@@ -28,6 +28,10 @@ export const initDriverSocket = (): Socket => {
     }
   });
 
+  socket.on("connect_error", (error) => {
+    console.error("[Notification] Driver socket connect_error:", error.message);
+  });
+
   socket.on("disconnect", () => {
     console.log("[Notification] Disconnected from driver server");
   });

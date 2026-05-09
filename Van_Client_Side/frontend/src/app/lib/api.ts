@@ -103,7 +103,7 @@ export const api = {
     const now = new Date();
     const bangkokDate = new Date(now.getTime() + 7 * 60 * 60 * 1000);
     const dateStr = bangkokDate.toISOString().slice(0, 10);
-    return request<{ trips: any[] }>(`/trips?date=${dateStr}&include_unassigned=true`);
+    return request<{ trips: any[] }>(`/trips?date=${dateStr}`);
   },
   createHold: (tripId: string, seatCount: number) =>
     request<{ hold: { id: string; seatCount: number; expiresAt: string; ttlSeconds: number } }>(

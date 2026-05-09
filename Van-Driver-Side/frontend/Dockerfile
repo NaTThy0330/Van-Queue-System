@@ -24,6 +24,11 @@ RUN npm run build
 # Production stage - serve with nginx
 FROM nginx:alpine
 
+ARG VITE_API_URL=http://localhost:5000
+ARG VITE_SOCKET_URL=http://localhost:5000
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_SOCKET_URL=${VITE_SOCKET_URL}
+
 # Add envsubst for runtime config rendering
 RUN apk add --no-cache gettext
 
