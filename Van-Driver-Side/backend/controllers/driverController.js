@@ -574,7 +574,7 @@ exports.verifyPayment = async (req, res) => {
                 );
 
                 await Queue.findByIdAndUpdate(payment.queue, {
-                    $set: { paymentStatus: 'paid' }
+                    $set: { paymentStatus: 'paid', status: 'confirmed' }
                 });
 
                 return res.json({ success: true, status: 'approved', source: 'payment' });
@@ -602,6 +602,7 @@ exports.verifyPayment = async (req, res) => {
             if (action === 'approve') {
                 queue.paymentStatus = 'paid';
                 queue.queueType = 'online_paid';
+                queue.status = 'confirmed';
                 await queue.save();
                 return res.json({ success: true, status: 'approved', source: 'queue' });
             } else {
@@ -619,6 +620,7 @@ exports.verifyPayment = async (req, res) => {
             if (action === 'approve') {
                 booking.type = 'paid';
                 booking.paymentStatus = 'verified';
+                booking.status = 'confirmed';
                 await booking.save();
                 return res.json({ success: true, status: 'approved', source: 'booking' });
             } else {
