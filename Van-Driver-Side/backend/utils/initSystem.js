@@ -1,35 +1,61 @@
-﻿/**
+/**
  * System Initialization
  * Auto-creates fixed routes and daily trips on server start
+ * Uses explicit Asia/Bangkok timezone for schedule consistency
  */
-const { startOfDay, setHours, setMinutes, addMinutes, isBefore, isEqual } = require('date-fns');
 
 const Route = require('../models/Route');
 const Trip = require('../models/Trip');
+const {
+    getBangkokDateTime,
+    getBangkokTodayString
+} = require('./bangkokTime');
+
+// ==================== ROUTE DEFINITIONS ====================
 
 const ROUTE_DEFINITIONS = [
     {
         routeCode: 'route_mochit',
-        routeName: 'ธรรมศาสตร์ รังสิต -> หมอชิต',
-        origin: 'ธรรมศาสตร์ รังสิต',
+        routeName: 'มธ. ศูนย์รังสิต → หมอชิต',
+        origin: 'มธ. ศูนย์รังสิต',
         destination: 'หมอชิต',
-        durationMinutes: 45
+        durationMinutes: 45,
+        destinationLat: 13.8027,
+        destinationLng: 100.5535
     },
     {
         routeCode: 'route_victory',
-        routeName: 'ธรรมศาสตร์ รังสิต -> อนุสาวรีย์',
-        origin: 'ธรรมศาสตร์ รังสิต',
-        destination: 'อนุสาวรีย์',
-        durationMinutes: 50
+        routeName: 'มธ. ศูนย์รังสิต → อนุสาวรีย์ชัยฯ',
+        origin: 'มธ. ศูนย์รังสิต',
+        destination: 'อนุสาวรีย์ชัยสมรภูมิ',
+        durationMinutes: 50,
+        destinationLat: 13.7649,
+        destinationLng: 100.5382
     },
     {
         routeCode: 'route_future',
-        routeName: 'ธรรมศาสตร์ รังสิต -> ฟิวเจอร์พาร์ค',
-        origin: 'ธรรมศาสตร์ รังสิต',
-        destination: 'ฟิวเจอร์พาร์ค',
-        durationMinutes: 30
+        routeName: 'มธ. ศูนย์รังสิต → ฟิวเจอร์พาร์ค รังสิต',
+        origin: 'มธ. ศูนย์รังสิต',
+        destination: 'ฟิวเจอร์พาร์ค รังสิต',
+        durationMinutes: 30,
+        destinationLat: 13.9901,
+        destinationLng: 100.6154
     }
 ];
+
+// ==================== STATIC SCHEDULE ====================
+// Hardcoded timetable — identical in local and cloud
+
+const SCHEDULE = [
+    // Mo Chit: 05:30 – 20:30 every 30 min (31 slots)
+    { routeCode: 'route_mochit', startH: 5, startM: 30, endH: 20, endM: 30, interval: 30 },
+    // Victory Monument: 05:30 – 20:30 every 30 min (31 slots)
+    { routeCode: 'route_victory', startH: 5, startM: 30, endH: 20, endM: 30, interval: 30 },
+    // Future Park: 07:00 – 20:00 every 30 min (27 slots)
+    { routeCode: 'route_future', startH: 7, startM: 0, endH: 20, endM: 0, interval: 30 },
+];
+
+// ==================== INIT ROUTES ====================
 
 const initRoutes = async () => {
     try {
@@ -42,7 +68,9 @@ const initRoutes = async () => {
                     $set: {
                         routeCode: def.routeCode,
                         routeName: def.routeName,
-                        durationMinutes: def.durationMinutes
+                        durationMinutes: def.durationMinutes,
+                        destinationLat: def.destinationLat,
+                        destinationLng: def.destinationLng
                     },
                     $setOnInsert: {
                         origin: def.origin,
@@ -53,7 +81,7 @@ const initRoutes = async () => {
             );
         }
 
-        // Backfill human-readable name for any remaining routes (e.g., reverse routes)
+        // Backfill human-readable name for any remaining routes
         await Route.updateMany(
             { routeName: { $in: [null, ''] } },
             [{ $set: { routeName: { $concat: ['$origin', ' -> ', '$destination'] } } }]
@@ -65,74 +93,86 @@ const initRoutes = async () => {
     }
 };
 
+// ==================== INIT DAILY TRIPS ====================
+
 const initDailyTrips = async () => {
     try {
-        const todayStart = startOfDay(new Date());
-        const existingTrips = await Trip.countDocuments({
-            departureTime: { $gte: todayStart }
-        });
+        console.log('Generating daily trips (Bangkok timezone)...');
 
-        if (existingTrips > 0) return;
-
-        console.log('Generating daily trips...');
-
-        const mochitRoute = await Route.findOne({ routeCode: 'route_mochit' });
-        const victoryRoute = await Route.findOne({ routeCode: 'route_victory' });
-        const futureRoute = await Route.findOne({ routeCode: 'route_future' });
+        // Load routes
+        const routeMap = {};
+        for (const def of ROUTE_DEFINITIONS) {
+            const route = await Route.findOne({ routeCode: def.routeCode });
+            if (route) routeMap[def.routeCode] = route;
+        }
 
         const tripsToInsert = [];
 
-        const generateSlots = (route, startH, startM, endH, endM, interval) => {
-            if (!route) return;
+        // Strict static timetable generation - Fill missing slots only
+        for (const sched of SCHEDULE) {
+            const route = routeMap[sched.routeCode];
+            if (!route) continue;
 
-            let current = setMinutes(setHours(todayStart, startH), startM);
-            const end = setMinutes(setHours(todayStart, endH), endM);
+            let h = sched.startH;
+            let m = sched.startM;
 
-            while (isBefore(current, end) || isEqual(current, end)) {
-                tripsToInsert.push({
+            while (h < sched.endH || (h === sched.endH && m <= sched.endM)) {
+                const tripTime = getBangkokDateTime(h, m);
+
+                // Check if this exact slot already exists to prevent overwriting booked trips
+                const exists = await Trip.exists({
                     route: route._id,
-                    departureTime: new Date(current),
-                    seatCapacity: 13,
-                    availableSeats: 13,
-                    status: 'scheduled',
-                    vanRef: null,
-                    driverId: null
+                    departureTime: tripTime
                 });
-                current = addMinutes(current, interval);
-            }
-        };
 
-        // Mochit: 05:30 - 20:30 every 30 min
-        generateSlots(mochitRoute, 5, 30, 20, 30, 30);
-        // Victory: 05:30 - 20:30 every 30 min
-        generateSlots(victoryRoute, 5, 30, 20, 30, 30);
-        // Future Park: 07:00 - 20:00 every 30 min
-        generateSlots(futureRoute, 7, 0, 20, 0, 30);
+                if (!exists) {
+                    tripsToInsert.push({
+                        route: route._id,
+                        departureTime: tripTime,
+                        seatCapacity: 13,
+                        availableSeats: 13,
+                        status: 'scheduled',
+                        vanRef: null,
+                        driverId: null
+                    });
+                }
+
+                // Advance by interval
+                m += sched.interval;
+                if (m >= 60) {
+                    h += Math.floor(m / 60);
+                    m = m % 60;
+                }
+            }
+        }
 
         if (tripsToInsert.length > 0) {
             await Trip.insertMany(tripsToInsert);
-            console.log(`Generated ${tripsToInsert.length} trips for today.`);
+            console.log(`Generated ${tripsToInsert.length} missing trips for today.`);
+        } else {
+            console.log('All 89 slots for today already exist. No new trips generated.');
         }
     } catch (error) {
         console.error('Init Error (Trips):', error);
     }
 };
 
+// ==================== RESET DAILY BINDINGS ====================
+
 const resetDailyBindings = async () => {
     try {
-        const d = new Date();
-        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const today = getBangkokTodayString();
 
         const Van = require('../models/Van');
 
         const result = await Van.updateMany(
             {
-                current_driverId: { $ne: null },
+                current_driver_id: { $ne: null },
                 last_active_date: { $ne: today }
             },
             {
                 $set: {
-                    current_driverId: null,
+                    current_driver_id: null,
                     driverId: null,
                     status: 'available',
                     last_active_date: null
@@ -147,6 +187,8 @@ const resetDailyBindings = async () => {
         console.error('Init Error (Reset Bindings):', error);
     }
 };
+
+// ==================== MAIN ====================
 
 const initSystem = async () => {
     console.log('Starting system initialization...');

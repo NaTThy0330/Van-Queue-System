@@ -8,6 +8,7 @@ interface AppConfig {
     paidLateMinutes: number;
     uploadDir: string;
     fcmServerKey?: string;
+    departureNotifySecret?: string;
 }
 export declare const config: AppConfig;
 export {};

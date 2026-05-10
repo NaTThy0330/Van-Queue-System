@@ -1,14 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.emitPaymentUpdate = exports.emitQueueUpdate = exports.emitTripAvailability = exports.initSocket = void 0;
+exports.emitPaymentUpdate = exports.emitQueueUpdate = exports.emitDepartureAlert = exports.emitTripAvailability = exports.initSocket = void 0;
 const socket_io_1 = require("socket.io");
 const Trip_1 = require("../models/Trip");
 let io = null;
 const tripRoom = (tripId) => `trip:${tripId}`;
 const passengerRoom = (passengerId) => `passenger:${passengerId}`;
+const allowedOrigins = (process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 const initSocket = (server) => {
     io = new socket_io_1.Server(server, {
-        cors: { origin: "*" },
+        cors: { origin: allowedOrigins.length > 0 ? allowedOrigins : "*" },
         transports: ["websocket", "polling"],
     });
     io.on("connection", (socket) => {
@@ -42,6 +46,19 @@ const emitTripAvailability = async (tripId) => {
     });
 };
 exports.emitTripAvailability = emitTripAvailability;
+const emitDepartureAlert = (payload) => {
+    const alertData = {
+        trip_id: payload.tripId,
+        title: payload.title,
+        message: payload.message,
+        route: payload.route || null,
+        departure_time: payload.departureTime || null,
+    };
+    const server = ensureIO();
+    // Emit to trip room (passengers who booked this trip)
+    server.to(tripRoom(payload.tripId)).emit("departure:alert", alertData);
+};
+exports.emitDepartureAlert = emitDepartureAlert;
 const emitQueueUpdate = (payload) => ensureIO().to(passengerRoom(payload.passengerId)).emit("queue:updated", payload);
 exports.emitQueueUpdate = emitQueueUpdate;
 const emitPaymentUpdate = (payload) => ensureIO().to(passengerRoom(payload.passengerId)).emit("payment:updated", payload);

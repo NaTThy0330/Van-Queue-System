@@ -11,19 +11,27 @@ const http = require('http');
 require('dotenv').config();
 
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { getMongoUri } = require('./config/env');
 
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: allowedOrigins.length > 0 ? allowedOrigins : '*'
+}));
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -38,8 +46,8 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Database
-const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/van-queue';
-console.log('Connecting to MongoDB:', MONGODB_URI);
+const MONGODB_URI = getMongoUri();
+
 
 const { startAutoCutoffScheduler } = require('./schedulers/autoCutoff');
 const { initSystem } = require('./utils/initSystem');
@@ -96,20 +104,20 @@ app.get('/api', (req, res) => {
 
 // Socket.IO
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+
 
   socket.on('join-trip', (tripId) => {
     socket.join(`trip-${tripId}`);
-    console.log(`Socket ${socket.id} joined trip-${tripId}`);
+
   });
 
   socket.on('leave-trip', (tripId) => {
     socket.leave(`trip-${tripId}`);
-    console.log(`Socket ${socket.id} left trip-${tripId}`);
+
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+
   });
 });
 
@@ -124,7 +132,7 @@ const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`Van Queue Server running on port ${PORT}`);
-  console.log(`Health: http://localhost:${PORT}/health`);
+
 });
 
 // Graceful Shutdown

@@ -21,6 +21,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
+const { getMongoUri } = require('../config/env');
 const {
     startOfDay,
     setHours,
@@ -32,7 +33,7 @@ const {
 } = require('date-fns');
 
 // ==================== CONFIG ====================
-const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/van_queue';
+const MONGODB_URI = getMongoUri();
 
 // ==================== MODELS (use actual project models) ====================
 const User = require('../models/User');

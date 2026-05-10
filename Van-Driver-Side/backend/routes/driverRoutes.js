@@ -22,6 +22,7 @@ router.get('/routes', driverController.getRoutes);
 router.get('/trips/available', driverController.getAvailableTrips);
 router.post('/trips/create', driverController.createTrip);
 router.get('/trips/current/:driver_id', driverController.getCurrentTrip);
+router.get('/trips/:trip_id/stats', driverController.getDashboardStats);
 router.get('/trips/:trip_id/passengers', driverController.getPassengers);
 
 // Walk-in

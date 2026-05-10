@@ -125,7 +125,14 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background:
+      radial-gradient(circle at top, rgba(251, 146, 60, 0.12), transparent 38%),
+      linear-gradient(180deg, #fff7f0 0%, #fffdf9 100%);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
   }
 
   /**
@@ -177,5 +184,10 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+  }
+
+  ::selection {
+    background: rgba(249, 115, 22, 0.18);
+    color: #7c2d12;
   }
 }

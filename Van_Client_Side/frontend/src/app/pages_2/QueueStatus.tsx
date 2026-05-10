@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, User, Phone, MapPin, AlertCircle, Bus, Clock, Timer } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
@@ -7,6 +7,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { CountdownTimer } from "@/app/components/CountdownTimer";
 import { CancelModal } from "@/app/components/CancelModal";
 import { useAppStore } from "@/app/store";
+import { useGsapReveal } from "@/app/hooks/useGsapReveal";
 
 const QueueStatus = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,8 +20,10 @@ const QueueStatus = () => {
   const refreshQueue = useAppStore((s) => s.refreshQueue);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useGsapReveal(pageRef, [id, bookings.length]);
 
-  const booking = bookings.find((b) => b.id === id);
+  const booking = useMemo(() => bookings.find((b) => b.id === id), [bookings, id]);
 
   useEffect(() => {
     if (!id || booking) return;
@@ -54,8 +57,16 @@ const QueueStatus = () => {
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
-        {isLoading ? "กำลังโหลดข้อมูลคิว..." : "ไม่พบข้อมูลคิว"}
+      <div
+        ref={pageRef}
+        className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.14),_transparent_36%),linear-gradient(180deg,#fff7f0_0%,#fffdf9_100%)] px-6 text-center"
+      >
+        <div className="rounded-[1.6rem] border border-white/70 bg-white/85 p-8 shadow-[0_12px_34px_rgba(249,115,22,0.08)] backdrop-blur-sm">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orange-100 border-t-orange-500" />
+          <p className="text-slate-600">
+            {isLoading ? "กำลังโหลดข้อมูลคิว..." : "ไม่พบข้อมูลคิว"}
+          </p>
+        </div>
       </div>
     );
   }
@@ -63,38 +74,17 @@ const QueueStatus = () => {
   const getStatusBadge = () => {
     switch (booking.status) {
       case "waiting":
-        return (
-          <Badge className="bg-primary/20 text-primary border-0 px-3 py-1">
-            กำลังรอขึ้นรถ
-          </Badge>
-        );
+        return <Badge className="border-0 bg-orange-100 px-3 py-1 text-orange-700">กำลังรอรถ</Badge>;
       case "unpaid":
-        return (
-          <Badge
-            variant="outline"
-            className="border-accent-foreground text-accent-foreground px-3 py-1"
-          >
-            รอการชำระเงิน
-          </Badge>
-        );
+        return <Badge variant="outline" className="border-orange-200 px-3 py-1 text-orange-700">รอชำระเงิน</Badge>;
       case "confirmed":
-        return (
-          <Badge className="bg-primary/20 text-primary border-0 px-3 py-1">
-            ยืนยันแล้ว
-          </Badge>
-        );
+        return <Badge className="border-0 bg-emerald-100 px-3 py-1 text-emerald-700">ยืนยันแล้ว</Badge>;
+      case "completed":
+        return <Badge className="border-0 bg-slate-200 px-3 py-1 text-slate-700">จบงานแล้ว</Badge>;
       case "expired":
-        return (
-          <Badge variant="destructive" className="px-3 py-1">
-            หมดเวลา
-          </Badge>
-        );
+        return <Badge variant="destructive" className="px-3 py-1">หมดเวลา</Badge>;
       case "cancelled":
-        return (
-          <Badge variant="secondary" className="px-3 py-1">
-            ยกเลิกแล้ว
-          </Badge>
-        );
+        return <Badge variant="secondary" className="px-3 py-1">ยกเลิกแล้ว</Badge>;
       default:
         return null;
     }
@@ -120,140 +110,138 @@ const QueueStatus = () => {
     booking.status === "confirmed";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-card/50">
-      {/* Header */}
-      <div className="sticky top-0 bg-card/90 backdrop-blur-md border-b border-border/30 z-40">
-        <div className="max-w-md mx-auto px-4 py-4 flex items-center gap-3">
+    <div
+      ref={pageRef}
+      className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.16),_transparent_38%),linear-gradient(180deg,#fff7f0_0%,#fffdf9_100%)] pb-10"
+    >
+      <div className="sticky top-0 z-40 border-b border-white/50 bg-white/75 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/home")}
-            className="rounded-full hover:bg-primary/10"
+            className="rounded-2xl bg-white/90 shadow-sm"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold text-foreground">สถานะคิว</h1>
+          <div className="flex-1">
+            <p className="text-xs uppercase tracking-[0.22em] text-orange-500">สถานะคิว</p>
+            <h1 className="text-lg font-bold text-slate-900">ตรวจสอบคิวแบบเรียลไทม์</h1>
+          </div>
           {getStatusBadge()}
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 space-y-5">
-        {/* Queue Number Card - More Modern */}
-        <Card className="p-6 text-center shadow-xl border-0 bg-gradient-to-br from-card via-card to-primary/5 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-          <div className="relative">
-            <p className="text-sm text-muted-foreground mb-2">หมายเลขคิวของคุณ</p>
-            <div className="text-7xl font-bold text-primary mb-3 drop-shadow-sm">
-              {booking.queueNumber}
-            </div>
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
-              <MapPin className="w-4 h-4 text-primary" />
-              <p className="text-sm font-medium text-foreground">
-                {booking.from} → {booking.to}
-              </p>
-            </div>
+      <div className="mx-auto max-w-md space-y-4 px-4 py-5">
+        <Card className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(249,115,22,0.98)_0%,rgba(251,146,60,0.92)_100%)] p-6 text-center text-white shadow-[0_20px_60px_rgba(249,115,22,0.20)]">
+          <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10" />
+          <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-white/10" />
+          <p className="text-sm text-white/80">หมายเลขคิวของคุณ</p>
+          <div className="mt-2 text-7xl font-bold drop-shadow-sm">{booking.queueNumber}</div>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm backdrop-blur">
+            <MapPin className="h-4 w-4" />
+            <span>
+              {booking.from} → {booking.to}
+            </span>
           </div>
         </Card>
 
-        {/* Unpaid Queue Info Card */}
         {booking.status === "unpaid" && (
           <>
-            <Card className="p-5 shadow-lg border-0 bg-card space-y-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2">
-                <Bus className="w-5 h-5 text-primary" />
+            <Card className="rounded-[1.6rem] border border-white/70 bg-white/85 p-5 shadow-[0_12px_34px_rgba(249,115,22,0.08)] backdrop-blur-sm">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
+                <Bus className="h-5 w-5 text-orange-500" />
                 ข้อมูลรถที่รอ
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-background/50 rounded-xl p-4 text-center">
-                  <Bus className="w-6 h-6 text-primary mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground mb-1">รถคันที่</p>
-                  <p className="font-bold text-foreground">
-                    {booking.vanNumber || "ตู้ 7"}
-                  </p>
+                <div className="rounded-[1.4rem] bg-orange-50 p-4 text-center">
+                  <Bus className="mx-auto mb-2 h-6 w-6 text-orange-500" />
+                  <p className="mb-1 text-xs text-slate-500">รถคันที่</p>
+                  <p className="font-bold text-slate-900">{booking.vanNumber || "ตู้ 7"}</p>
                 </div>
-                <div className="bg-background/50 rounded-xl p-4 text-center">
-                  <Clock className="w-6 h-6 text-primary mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground mb-1">รถจะมาเวลา</p>
-                  <p className="font-bold text-foreground">{booking.departureTime}</p>
+                <div className="rounded-[1.4rem] bg-orange-50 p-4 text-center">
+                  <Clock className="mx-auto mb-2 h-6 w-6 text-orange-500" />
+                  <p className="mb-1 text-xs text-slate-500">รถจะมาถึง</p>
+                  <p className="font-bold text-slate-900">{booking.departureTime}</p>
                 </div>
-              </div>
-
-              <div className="bg-accent/50 rounded-xl p-4 text-center">
-                <Timer className="w-6 h-6 text-accent-foreground mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground mb-1">ต้องไปถึงก่อน</p>
-                <p className="font-bold text-lg text-accent-foreground">
-                  {booking.departureTime}
-                </p>
               </div>
             </Card>
 
-            {/* Countdown Timer */}
             {booking.expiresAt && (
-              <CountdownTimer
-                expiresAt={new Date(booking.expiresAt)}
-                onExpire={handleExpire}
-              />
+              <CountdownTimer expiresAt={new Date(booking.expiresAt)} onExpire={handleExpire} />
             )}
           </>
         )}
 
-        {/* Info Card for Confirmed/Waiting */}
         {(booking.status === "confirmed" || booking.status === "waiting") && (
-          <Card className="p-5 shadow-lg border-0 bg-card space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-border/50">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-primary" />
+          <Card className="rounded-[1.6rem] border border-white/70 bg-white/85 p-5 shadow-[0_12px_34px_rgba(249,115,22,0.08)] backdrop-blur-sm">
+            <div className="mb-4 grid gap-3">
+              <div className="flex items-center gap-3 rounded-2xl bg-orange-50 p-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                  <User className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">ชื่อผู้จอง</p>
+                  <p className="font-semibold text-slate-900">{user?.name ?? "ผู้ใช้"}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">ชื่อผู้จอง</p>
-                <p className="font-semibold text-foreground">{user?.name ?? "ผู้ใช้"}</p>
+              <div className="flex items-center gap-3 rounded-2xl bg-orange-50 p-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                  <Phone className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">เบอร์โทรศัพท์</p>
+                  <p className="font-semibold text-slate-900">{user?.phone ?? "-"}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3 pb-3 border-b border-border/50">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <Phone className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">เบอร์โทร</p>
-                <p className="font-semibold text-foreground">{user?.phone ?? "-"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <Clock className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">เวลาโดยประมาณ</p>
-                <p className="font-semibold text-foreground">{booking.departureTime}</p>
+              <div className="flex items-center gap-3 rounded-2xl bg-orange-50 p-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">เวลาโดยประมาณ</p>
+                  <p className="font-semibold text-slate-900">{booking.departureTime}</p>
+                </div>
               </div>
             </div>
           </Card>
         )}
 
-        {/* Alert */}
-        {booking.status === "unpaid" && (
-          <div className="flex items-start gap-3 p-4 bg-accent/70 rounded-2xl shadow-sm">
-            <div className="w-8 h-8 bg-accent-foreground/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-4 h-4 text-accent-foreground" />
+        {booking.status === "completed" && (
+          <Card className="rounded-[1.6rem] border border-slate-200 bg-white/85 p-5 text-center shadow-[0_12px_34px_rgba(148,163,184,0.10)] backdrop-blur-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+              <Timer className="h-6 w-6" />
             </div>
-            <div>
-              <p className="font-medium text-accent-foreground text-sm mb-1">โปรดทราบ</p>
-              <p className="text-sm text-accent-foreground/80">
-                คิวที่ยังไม่ชำระเงินจะอยู่หลังคิวที่ชำระแล้ว กรุณาชำระเงินเพื่อยืนยันคิว
-              </p>
+            <h3 className="text-lg font-bold text-slate-900">เที่ยวนี้จบงานแล้ว</h3>
+            <p className="mt-2 text-sm text-slate-500">
+              คิวนี้ถูกย้ายออกจากคิวใช้งานแล้ว คุณสามารถดูรายละเอียดย้อนหลังได้จากประวัติ
+            </p>
+          </Card>
+        )}
+
+        {booking.status === "unpaid" && (
+          <div className="rounded-[1.6rem] border border-red-200 bg-red-50/90 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-red-500 shadow-sm">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="mb-1 font-semibold text-red-700">โปรดชำระเงิน</p>
+                <p className="text-sm leading-6 text-red-700/85">
+                  คิวของคุณจะยังไม่ถูกยืนยันจนกว่าจะชำระเงินเรียบร้อย
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Actions */}
         {isActive && (
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-1">
             {booking.status === "unpaid" && (
               <Button
                 onClick={handlePayment}
-                className="w-full h-14 text-base font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-14 w-full rounded-2xl bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 text-base font-semibold shadow-[0_12px_30px_rgba(249,115,22,0.22)] animate-shimmer-btn"
               >
                 ชำระเงินตอนนี้
               </Button>
@@ -262,7 +250,7 @@ const QueueStatus = () => {
             <Button
               variant="outline"
               onClick={() => setShowCancelModal(true)}
-              className="w-full h-12 text-base font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 rounded-2xl"
+              className="h-12 w-full rounded-2xl border-red-200 bg-white text-base font-semibold text-red-600 hover:bg-red-50"
             >
               ยกเลิกการจอง
             </Button>

@@ -3,8 +3,9 @@
  */
 import { io } from 'socket.io-client';
 import { getToken } from './auth';
+import { getApiUrl } from './env';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : `http://${window.location.hostname}:5000`);
+const SOCKET_URL = getApiUrl();
 
 let socket = null;
 
@@ -19,11 +20,11 @@ export const initSocket = () => {
     });
 
     socket.on('connect', () => {
-        console.log('🔌 Socket connected:', socket.id);
+
     });
 
     socket.on('disconnect', () => {
-        console.log('🔌 Socket disconnected');
+
     });
 
     socket.on('connect_error', (error) => {
@@ -43,7 +44,7 @@ export const getSocket = () => {
 export const joinTrip = (tripId) => {
     const s = getSocket();
     s.emit('join-trip', tripId);
-    console.log(`📡 Joined trip room: ${tripId}`);
+
 };
 
 export const leaveTrip = (tripId) => {

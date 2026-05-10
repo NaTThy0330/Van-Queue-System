@@ -1,3 +1,5 @@
+import { getApiUrl } from "./env";
+
 const TOKEN_KEY = "van_auth_token";
 
 export type ApiError = {
@@ -6,8 +8,7 @@ export type ApiError = {
 };
 
 const getBaseUrl = () => {
-  const base = import.meta.env.VITE_API_URL;
-  return base && typeof base === "string" ? base.replace(/\/$/, "") : "http://localhost:4000";
+  return getApiUrl();
 };
 
 export const getAuthToken = () => {
@@ -97,8 +98,13 @@ export const api = {
     request<{ routes: Array<{ _id: string; origin: string; destination: string; durationMinutes?: number }> }>(
       "/routes"
     ),
-  listTrips: () =>
-    request<{ trips: any[] }>("/trips"),
+  listTrips: () => {
+    // Send today's date (Bangkok timezone) so backend only returns today's trips
+    const now = new Date();
+    const bangkokDate = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const dateStr = bangkokDate.toISOString().slice(0, 10);
+    return request<{ trips: any[] }>(`/trips?date=${dateStr}`);
+  },
   createHold: (tripId: string, seatCount: number) =>
     request<{ hold: { id: string; seatCount: number; expiresAt: string; ttlSeconds: number } }>(
       `/trips/${tripId}/hold`,

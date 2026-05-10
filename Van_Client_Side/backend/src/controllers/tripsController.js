@@ -8,21 +8,30 @@ const parseDateRange = (dateString) => {
     if (!dateString) {
         return undefined;
     }
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) {
-        throw new AppError_1.AppError("Invalid date parameter", 400);
+    // Parse YYYY-MM-DD as Bangkok midnight boundaries (UTC+7)
+    const parts = dateString.split("-").map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) {
+        // Fallback: try as ISO date
+        const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) {
+            throw new AppError_1.AppError("Invalid date parameter", 400);
+        }
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        return { $gte: start, $lt: end };
     }
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
+    const [y, m, d] = parts;
+    // Bangkok 00:00 = UTC 17:00 previous day (UTC+7)
+    const start = new Date(Date.UTC(y, m - 1, d, -7, 0, 0));
+    const end = new Date(Date.UTC(y, m - 1, d + 1, -7, 0, 0));
     return { $gte: start, $lt: end };
 };
 const listTrips = async (req, res) => {
     const routeId = typeof req.query.route_id === "string" ? req.query.route_id : undefined;
     const date = typeof req.query.date === "string" ? req.query.date : undefined;
     const statusParam = typeof req.query.status === "string" ? req.query.status : "scheduled";
-    const includeUnassigned = req.query.include_unassigned === "true" || req.query.include_unassigned === "1";
     const filter = {};
     if (routeId) {
         filter.route = routeId;
@@ -30,11 +39,18 @@ const listTrips = async (req, res) => {
     if (statusParam) {
         filter.status = statusParam;
     }
-    if (!includeUnassigned) {
-        filter.driverId = { $ne: null };
-    }
+    // Only show trips that have a driver assigned
+    filter.driverId = { $ne: null };
     if (date) {
         filter.departureTime = parseDateRange(date);
+    }
+    // Always exclude trips whose departure time has already passed
+    const now = new Date();
+    if (filter.departureTime) {
+        // Merge with existing date range
+        filter.departureTime.$gte = filter.departureTime.$gte > now ? filter.departureTime.$gte : now;
+    } else {
+        filter.departureTime = { $gt: now };
     }
     const trips = await Trip_1.TripModel.find(filter).populate("route").sort({ departureTime: 1 });
     res.json({ trips });

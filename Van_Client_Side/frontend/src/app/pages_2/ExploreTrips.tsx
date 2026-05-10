@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Sparkles } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
   Select,
@@ -12,6 +12,7 @@ import {
 import { TripCard } from "@/app/components/TripCard";
 import { PaymentModal } from "@/app/components/PaymentModal";
 import { useAppStore, Trip } from "@/app/store";
+import { useGsapReveal } from "@/app/hooks/useGsapReveal";
 
 const ExploreTrips = () => {
   const navigate = useNavigate();
@@ -20,6 +21,9 @@ const ExploreTrips = () => {
   const isTripsLoading = useAppStore((s) => s.isTripsLoading);
   const loadTrips = useAppStore((s) => s.loadTrips);
   const addBooking = useAppStore((s) => s.addBooking);
+
+  const pageRef = useRef<HTMLDivElement>(null);
+  useGsapReveal(pageRef, [trips.length]);
 
   const [origin, setOrigin] = useState<string>("all");
   const [destination, setDestination] = useState<string>("all");
@@ -46,15 +50,30 @@ const ExploreTrips = () => {
     };
   }, [loadTrips]);
 
-  const locations = Array.from(
-    new Set(
-      trips
-        .flatMap((trip) => [trip.from, trip.to])
-        .filter((item) => item && item !== "ไม่ระบุ")
-    )
+  const locations = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          trips
+            .flatMap((trip) => [trip.from, trip.to])
+            .filter((item) => item && item !== "ไม่ระบุ")
+        )
+      ),
+    [trips]
   );
 
   const filteredTrips = trips
+    .filter((trip) => {
+      // Hide trips whose departure time has already passed (client-side fallback)
+      if (!trip.departureTime || trip.departureTime === "-") return false;
+      const match = trip.departureTime.match(/(\d{1,2}):(\d{2})/);
+      if (!match) return true;
+      const [, h, m] = match.map(Number);
+      const now = new Date();
+      const depTime = new Date();
+      depTime.setHours(h, m, 0, 0);
+      return depTime > now;
+    })
     .filter((trip) => origin === "all" || trip.from === origin)
     .filter((trip) => destination === "all" || trip.to === destination)
     .sort((a, b) => {
@@ -85,9 +104,7 @@ const ExploreTrips = () => {
       }
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"
+        err instanceof Error ? err.message : "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"
       );
     } finally {
       setIsSubmitting(false);
@@ -95,29 +112,48 @@ const ExploreTrips = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sticky Header */}
-      <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-border/50 z-40">
-        <div className="max-w-md mx-auto px-4 py-3">
-          <div className="flex items-center gap-3 mb-4">
+    <div
+      ref={pageRef}
+      className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.16),_transparent_38%),linear-gradient(180deg,#fff7f0_0%,#fffdf9_100%)] pb-28"
+    >
+      <div className="sticky top-0 z-40 border-b border-white/50 bg-white/75 backdrop-blur-xl">
+        <div className="mx-auto max-w-md px-4 py-4">
+          <div className="mb-4 flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              className="shrink-0"
+              className="rounded-2xl bg-white/90 shadow-sm"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-bold text-foreground">จองคิวรถตู้</h1>
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-orange-500">ค้นหาเที่ยวรถ</p>
+              <h1 className="text-lg font-bold text-slate-900">เลือกเที่ยวที่เหมาะกับคุณ</h1>
+            </div>
           </div>
 
-          {/* Filters */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="rounded-[1.6rem] bg-[linear-gradient(135deg,rgba(249,115,22,0.98)_0%,rgba(251,146,60,0.92)_100%)] p-4 text-white shadow-[0_16px_40px_rgba(249,115,22,0.18)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs backdrop-blur">
+                  <Sparkles size={12} />
+                  อัปเดตเที่ยวรถแบบเรียลไทม์
+                </div>
+                <p className="mt-3 text-sm text-white/90">
+                  เลือกต้นทาง ปลายทาง และจัดเรียงให้ตรงกับจังหวะการเดินทางของคุณ
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/15 p-3">🚌</div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <Select value={origin} onValueChange={setOrigin}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="h-12 rounded-2xl border-white/70 bg-white/90 shadow-sm">
                 <SelectValue placeholder="ต้นทาง" />
               </SelectTrigger>
-              <SelectContent className="bg-card">
+              <SelectContent className="rounded-2xl border-orange-100 bg-white">
                 <SelectItem value="all">ทุกต้นทาง</SelectItem>
                 {locations.map((loc) => (
                   <SelectItem key={loc} value={loc}>
@@ -128,10 +164,10 @@ const ExploreTrips = () => {
             </Select>
 
             <Select value={destination} onValueChange={setDestination}>
-              <SelectTrigger className="bg-background">
+              <SelectTrigger className="h-12 rounded-2xl border-white/70 bg-white/90 shadow-sm">
                 <SelectValue placeholder="ปลายทาง" />
               </SelectTrigger>
-              <SelectContent className="bg-card">
+              <SelectContent className="rounded-2xl border-orange-100 bg-white">
                 <SelectItem value="all">ทุกปลายทาง</SelectItem>
                 {locations.map((loc) => (
                   <SelectItem key={loc} value={loc}>
@@ -142,45 +178,57 @@ const ExploreTrips = () => {
             </Select>
           </div>
 
-          {/* Sort */}
-          <div className="flex gap-2">
+          <div className="mt-3 flex gap-2">
             <Button
               variant={sortBy === "eta" ? "default" : "outline"}
               size="sm"
               onClick={() => setSortBy("eta")}
-              className="flex-1"
+              className="flex-1 rounded-2xl"
             >
-              <ArrowUpDown className="w-3 h-3 mr-1" />
-              รถถึงเร็วที่สุด
+              <ArrowUpDown className="mr-1 h-3 w-3" />
+              เร็วสุด
             </Button>
             <Button
               variant={sortBy === "queue" ? "default" : "outline"}
               size="sm"
               onClick={() => setSortBy("queue")}
-              className="flex-1"
+              className="flex-1 rounded-2xl"
             >
-              <ArrowUpDown className="w-3 h-3 mr-1" />
-              คิวน้อยที่สุด
+              <ArrowUpDown className="mr-1 h-3 w-3" />
+              คิวน้อยสุด
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Trip List */}
-      <div className="max-w-md mx-auto px-4 py-4 space-y-3">
-        {error && <div className="text-sm text-destructive text-center">{error}</div>}
+      <div className="mx-auto max-w-md px-4 py-4">
+        {error && (
+          <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         {isTripsLoading ? (
-          <div className="text-center py-12 text-muted-foreground">
-            กำลังโหลดเที่ยวรถ...
+          <div className="rounded-[1.6rem] border border-white/70 bg-white/85 p-8 text-center shadow-[0_12px_34px_rgba(249,115,22,0.08)] backdrop-blur-sm">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orange-100 border-t-orange-500" />
+            <p className="text-sm text-slate-500">กำลังโหลดเที่ยวรถ...</p>
           </div>
         ) : filteredTrips.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            ไม่พบเที่ยวรถที่ตรงกับเงื่อนไข
+          <div className="rounded-[1.6rem] border border-white/70 bg-white/85 p-8 text-center shadow-[0_12px_34px_rgba(249,115,22,0.08)] backdrop-blur-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-3xl bg-orange-50 text-2xl">
+              🪄
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">ยังไม่พบเที่ยวรถ</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              ลองเปลี่ยนตัวกรองต้นทางหรือปลายทางดูอีกครั้ง
+            </p>
           </div>
         ) : (
-          filteredTrips.map((trip, index) => (
-            <TripCard key={trip.id} trip={trip} onBook={handleBook} index={index} />
-          ))
+          <div className="space-y-3">
+            {filteredTrips.map((trip, index) => (
+              <TripCard key={trip.id} trip={trip} onBook={handleBook} index={index} />
+            ))}
+          </div>
         )}
       </div>
 

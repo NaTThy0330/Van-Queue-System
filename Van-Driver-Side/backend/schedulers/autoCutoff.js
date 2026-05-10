@@ -1,11 +1,13 @@
 /**
  * Auto Cutoff Scheduler
- * Cancels unpaid bookings after cutoff and marks no-shows
+ * - Cancels unpaid bookings after cutoff and marks no-shows
+ * - Auto-generates daily trips at midnight (Bangkok time)
  */
 
 const cron = require('node-cron');
 const Trip = require('../models/Trip');
 const Booking = require('../models/Booking');
+const { initSystem } = require('../utils/initSystem');
 
 const GRACE_PERIOD_MINUTES = 5;
 
@@ -91,12 +93,20 @@ async function autoTransferNoShowPaid() {
 }
 
 function startAutoCutoffScheduler() {
+    // Every minute: cutoff + no-show checks
     cron.schedule('* * * * *', async () => {
         await autoCancelUnpaidBookings();
         await autoTransferNoShowPaid();
     });
 
+    // Every day at midnight Bangkok time (17:00 UTC) — generate next day's trips
+    cron.schedule('0 17 * * *', async () => {
+        console.log('[Scheduler] Midnight Bangkok — generating daily trips...');
+        await initSystem();
+    });
+
     console.log('Auto Cutoff Scheduler started (every minute)');
+    console.log('Daily Trip Scheduler started (midnight Bangkok = 17:00 UTC)');
 }
 
 module.exports = {
@@ -104,4 +114,3 @@ module.exports = {
     autoCancelUnpaidBookings,
     autoTransferNoShowPaid
 };
-

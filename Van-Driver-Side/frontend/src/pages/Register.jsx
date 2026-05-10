@@ -2,6 +2,7 @@
  * Register Page - Driver Registration
  */
 import { useState } from 'react';
+import { getApiUrl } from '../services/env';
 import './Register.css';
 
 export default function Register({ onRegisterSuccess, onGoToLogin }) {
@@ -77,7 +78,7 @@ export default function Register({ onRegisterSuccess, onGoToLogin }) {
         setServerError('');
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const API_URL = getApiUrl();
             const response = await fetch(`${API_URL}/api/driver/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

@@ -22,20 +22,18 @@ export function TripCard({ trip, onBook, index }: TripCardProps) {
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
       whileHover={{ y: -3, scale: 1.01 }}
-      className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 transition-shadow hover:shadow-md"
-      data-aos="fade-up"
-      data-aos-delay={String(index * 60)}
-      data-aos-once="false"
+      className="group relative overflow-hidden rounded-[1.6rem] border border-white/70 bg-white/85 p-4 shadow-[0_14px_40px_rgba(249,115,22,0.10)] backdrop-blur-sm transition-shadow hover:shadow-[0_18px_54px_rgba(249,115,22,0.16)]"
     >
-      {/* Badges row */}
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300" />
+
       {(isLowQueue || isFast) && (
-        <div className="flex gap-1.5 mb-2">
+        <div className="mb-3 flex flex-wrap gap-2">
           {isFast && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 400, delay: index * 0.07 + 0.2 }}
-              className="flex items-center gap-0.5 text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full"
+              className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-3 py-1 text-[11px] text-white shadow-sm"
             >
               <Zap size={9} />
               เร็ว
@@ -46,64 +44,62 @@ export function TripCard({ trip, onBook, index }: TripCardProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 400, delay: index * 0.07 + 0.3 }}
-              className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full"
+              className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] text-emerald-700"
             >
-              คิวน้อย 🎯
+              คิวน้อย
             </motion.span>
           )}
         </div>
       )}
 
-      {/* Route */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex flex-col items-center gap-1">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex flex-col items-center gap-1.5">
           <motion.div
-            className="w-2.5 h-2.5 rounded-full bg-orange-400"
+            className="h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_0_6px_rgba(251,146,60,0.15)]"
             animate={{ scale: [1, 1.3, 1] }}
             transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
           />
-          <div className="w-0.5 h-8 bg-gradient-to-b from-orange-300 to-orange-500" />
+          <div className="h-10 w-0.5 bg-gradient-to-b from-orange-200 via-orange-300 to-orange-500" />
           <motion.div
-            className="w-2.5 h-2.5 rounded-full bg-orange-600"
+            className="h-3 w-3 rounded-full bg-orange-600 shadow-[0_0_0_6px_rgba(249,115,22,0.16)]"
             animate={{ scale: [1, 1.3, 1] }}
             transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 + 0.5 }}
           />
         </div>
-        <div className="flex flex-col justify-between h-12 flex-1">
-          <div className="flex items-center gap-1.5">
-            <MapPin size={13} className="text-orange-400 shrink-0" />
-            <span className="text-sm text-gray-700 truncate">{trip.from}</span>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex items-center gap-2 min-w-0">
+            <MapPin size={14} className="shrink-0 text-orange-400" />
+            <span className="truncate text-sm font-medium text-slate-700">{trip.from}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <MapPin size={13} className="text-orange-600 shrink-0" />
-            <span className="text-sm text-gray-800 truncate">{trip.to}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <MapPin size={14} className="shrink-0 text-orange-600" />
+            <span className="truncate text-sm font-semibold text-slate-900">{trip.to}</span>
           </div>
         </div>
       </div>
 
-      {/* Info Row */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <div className="flex items-center gap-1.5 bg-orange-50 rounded-full px-3 py-1">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50 px-3 py-1.5">
           <Clock size={12} className="text-orange-500" />
-          <span className="text-xs text-orange-700">{trip.eta} นาที</span>
+          <span className="text-xs font-medium text-orange-700">{trip.eta} นาที</span>
         </div>
-        <div className="flex items-center gap-1.5 bg-orange-50 rounded-full px-3 py-1">
+        <div className="flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50 px-3 py-1.5">
           <Users size={12} className="text-orange-500" />
-          <span className="text-xs text-orange-700">คิว {trip.queueCount} คน</span>
+          <span className="text-xs font-medium text-orange-700">คิว {trip.queueCount} คน</span>
         </div>
-        <div className="flex items-center gap-1.5 bg-orange-50 rounded-full px-3 py-1">
-          <span className="text-xs text-orange-700">🚌 {trip.departureTime}</span>
+        <div className="flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50 px-3 py-1.5">
+          <span className="text-xs font-medium text-orange-700">🚌 {trip.departureTime}</span>
         </div>
       </div>
 
-      {/* Book Button */}
       <motion.button
         whileTap={{ scale: 0.96 }}
         whileHover={{ scale: 1.02 }}
         onClick={() => onBook(trip)}
-        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-xl py-2.5 transition-all shadow-sm shadow-orange-200 animate-shimmer-btn"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 py-3 text-white shadow-[0_12px_30px_rgba(249,115,22,0.22)] transition-all animate-shimmer-btn"
       >
-        <span className="text-sm">จองเลย</span>
+        <span className="text-sm font-semibold">จองเลย</span>
         <motion.div
           animate={{ x: [0, 3, 0] }}
           transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}

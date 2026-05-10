@@ -7,24 +7,29 @@ const Trip = require('../models/Trip');
 const Van = require('../models/Van');
 const Queue = require('../models/Queue');
 const Route = require('../models/Route');
-const { startOfDay, endOfDay } = require('date-fns');
+const { getBangkokDayRange } = require('../utils/bangkokTime');
 
 exports.getCurrentTrip = async (req, res) => {
     try {
         const { driverId } = req.params;
+        const { start: todayStart, end: todayEnd } = getBangkokDayRange();
 
-        const trip = await Trip.findOne({
+        const trip = await Trip.find({
             driverId,
-            status: { $in: ['scheduled', 'departed'] }
+            status: { $in: ['scheduled', 'departed'] },
+            departureTime: { $gte: todayStart, $lte: todayEnd }
         })
             .populate('route')
-            .populate('vanRef');
+            .populate('vanRef')
+            .sort({ status: 1, departureTime: 1 });
 
-        if (!trip) {
+        const currentTrip = trip.length > 0 ? trip[0] : null;
+
+        if (!currentTrip) {
             return res.json({ success: true, trip: null });
         }
 
-        res.json({ success: true, trip });
+        res.json({ success: true, trip: currentTrip });
     } catch (error) {
         console.error('[getCurrentTrip Error]', error);
         res.status(500).json({ success: false, error: error.message });
@@ -79,7 +84,6 @@ exports.updateStatus = async (req, res) => {
 exports.notifyDeparture = async (req, res) => {
     try {
         const { tripId } = req.params;
-        console.log(`[Notify] Departure notification for trip ${tripId}`);
         res.json({ success: true, message: 'Departure notification sent' });
     } catch (error) {
         console.error('[notifyDeparture Error]', error);
@@ -116,7 +120,6 @@ exports.confirmDeparture = async (req, res) => {
 exports.saveCheckinState = async (req, res) => {
     try {
         const { tripId } = req.params;
-        console.log(`[CheckinState] Saved for trip ${tripId}`);
         res.json({ success: true });
     } catch (error) {
         console.error('[saveCheckinState Error]', error);
@@ -127,7 +130,6 @@ exports.saveCheckinState = async (req, res) => {
 exports.runUpQueue = async (req, res) => {
     try {
         const { tripId } = req.params;
-        console.log(`[RunUpQueue] Processing for trip ${tripId}`);
         res.json({ success: true, message: 'Queue processed' });
     } catch (error) {
         console.error('[runUpQueue Error]', error);
@@ -183,8 +185,7 @@ exports.getTripHistory = async (req, res) => {
 
 exports.getAvailableTrips = async (req, res) => {
     try {
-        const today = startOfDay(new Date());
-        const tomorrow = endOfDay(new Date());
+        const { start: today, end: tomorrow } = getBangkokDayRange();
 
         const trips = await Trip.find({
             departureTime: { $gte: today, $lte: tomorrow },
