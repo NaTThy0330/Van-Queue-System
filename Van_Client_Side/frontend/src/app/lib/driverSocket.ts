@@ -13,10 +13,10 @@ const getDriverBackendUrl = (): string => {
 };
 
 export const initDriverSocket = (): Socket => {
-  if (socket?.connected) return socket;
+  if (socket) return socket;
 
   socket = io(getDriverBackendUrl(), {
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"],
     reconnection: true,
     reconnectionDelay: 3000,
   });

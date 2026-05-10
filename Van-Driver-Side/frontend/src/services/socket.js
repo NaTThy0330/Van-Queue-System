@@ -3,9 +3,9 @@
  */
 import { io } from 'socket.io-client';
 import { getToken } from './auth';
-import { getApiUrl } from './env';
+import { getDriverSocketUrl } from './env';
 
-const SOCKET_URL = getApiUrl();
+const SOCKET_URL = getDriverSocketUrl();
 
 let socket = null;
 
@@ -14,6 +14,7 @@ export const initSocket = () => {
 
     socket = io(SOCKET_URL, {
         auth: { token: getToken() },
+        transports: ['polling', 'websocket'],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionAttempts: 5

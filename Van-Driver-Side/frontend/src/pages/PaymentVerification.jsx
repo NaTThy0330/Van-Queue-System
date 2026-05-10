@@ -9,11 +9,24 @@ import { getApiUrl } from '../services/env';
 import './PaymentVerification.css';
 
 const resolveSlipUrl = (payment) => {
-    const raw = payment?.slip_url || payment?.slipUrl || payment?.payment_slip || null;
+    const raw = String(payment?.slip_url || payment?.slipUrl || payment?.payment_slip || '').trim();
     if (!raw) return null;
-    if (/^https?:\/\//i.test(raw)) return raw;
-    const baseUrl = getApiUrl();
-    return `${baseUrl}${raw.startsWith('/') ? '' : '/'}${raw}`;
+
+    const fixedProtocol = raw.replace(/^(https?)\/\/?/i, '$1://');
+    if (/^https?:\/\//i.test(fixedProtocol)) {
+        return fixedProtocol;
+    }
+
+    const uploadsMatch = fixedProtocol.match(/\/uploads\/.*$/i);
+    if (uploadsMatch) {
+        return `${getApiUrl()}${uploadsMatch[0]}`;
+    }
+
+    if (fixedProtocol.startsWith('/')) {
+        return `${getApiUrl()}${fixedProtocol}`;
+    }
+
+    return `${getApiUrl()}/${fixedProtocol}`;
 };
 
 const resolveTicketCode = (payment) => {

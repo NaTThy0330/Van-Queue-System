@@ -11,7 +11,8 @@ const socket_1 = require("./lib/socket");
 const holdExpirationJob_1 = require("./jobs/holdExpirationJob");
 const queueAutoCloseJob_1 = require("./jobs/queueAutoCloseJob");
 const server = http_1.default.createServer(app_1.default);
-(0, socket_1.initSocket)(server);
+const io = (0, socket_1.initSocket)(server);
+app_1.default.set("io", io);
 const bootstrap = async () => {
     try {
         await mongoose_1.default.connect(env_1.config.mongoUri);
