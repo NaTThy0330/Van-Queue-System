@@ -18,6 +18,7 @@ export interface Trip {
   queueCount: number;
   departureTime: string;
   vanNumber: string;
+  isSpecialRound?: boolean;
 }
 
 export interface Booking {
@@ -145,6 +146,7 @@ const mapTrip = (trip: any, routesById: RouteMap): Trip => {
     queueCount: Number(trip?.onlineBookedSeats ?? 0),
     departureTime: formatTime(trip?.departureTime),
     vanNumber: trip?.vanId ?? trip?.vanRef?.number ?? "-",
+    isSpecialRound: Boolean(trip?.isSpecialRound),
   };
 };
 

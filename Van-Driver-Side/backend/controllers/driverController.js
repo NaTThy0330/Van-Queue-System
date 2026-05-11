@@ -28,6 +28,27 @@ const getTodayStr = () => getBangkokTodayString();
 const getPassengerApiUrl = () => process.env.PASSENGER_API_URL || '';
 const getBridgeSecret = () => process.env.DEPARTURE_NOTIFY_SECRET || '';
 
+const resolveSlipUrl = (slipUrl, passengerBaseUrl) => {
+    if (!slipUrl) {
+        return null;
+    }
+
+    const rawUrl = String(slipUrl).trim();
+    if (!rawUrl) {
+        return null;
+    }
+
+    if (/^https?:\/\//i.test(rawUrl)) {
+        return rawUrl;
+    }
+
+    if (rawUrl.startsWith('/')) {
+        return passengerBaseUrl ? `${passengerBaseUrl}${rawUrl}` : rawUrl;
+    }
+
+    return passengerBaseUrl ? `${passengerBaseUrl}/${rawUrl}` : rawUrl;
+};
+
 const toObjectIdString = (value) => {
     if (!value) {
         return null;
@@ -77,6 +98,7 @@ const serializeTripSnapshot = (tripDoc) => {
         departure_time: trip.departureTime || null,
         arrival_time: trip.arrivalTime || null,
         actual_departure_time: trip.actualDepartureTime || null,
+        is_special_round: !!trip.isSpecialRound,
         status: trip.status,
         seat_capacity: trip.seatCapacity,
         online_quota: trip.onlineQuota,
@@ -285,7 +307,8 @@ exports.getProfile = async (req, res) => {
                 route: activeTrip.route,
                 van: activeTrip.vanRef,
                 departure_time: activeTrip.departureTime,
-                status: activeTrip.status
+                status: activeTrip.status,
+                is_special_round: !!activeTrip.isSpecialRound
             } : null
         });
 
@@ -396,7 +419,17 @@ exports.getAvailableTrips = async (req, res) => {
         const { end: bkkTodayEnd } = getBangkokDayRange();
 
         if (now < bookingOpen) {
-            return res.json({ success: true, trips: [] });
+            const specialTrips = await Trip.find({
+                status: 'scheduled',
+                driverId: null,
+                isSpecialRound: true,
+                departureTime: { $lt: bkkTodayEnd }
+            })
+                .populate('route')
+                .populate('vanRef')
+                .sort({ departureTime: 1 });
+
+            return res.json({ success: true, trips: specialTrips });
         }
 
         const trips = await Trip.find({
@@ -411,7 +444,24 @@ exports.getAvailableTrips = async (req, res) => {
             .populate('vanRef')
             .sort({ departureTime: 1 });
 
-        res.json({ success: true, trips });
+        const specialTrips = await Trip.find({
+            status: 'scheduled',
+            driverId: null,
+            isSpecialRound: true,
+            departureTime: { $lt: bkkTodayEnd }
+        })
+            .populate('route')
+            .populate('vanRef')
+            .sort({ departureTime: 1 });
+
+        const tripMap = new Map();
+        [...trips, ...specialTrips].forEach((trip) => {
+            tripMap.set(String(trip._id), trip);
+        });
+
+        const bookableTrips = Array.from(tripMap.values()).sort((a, b) => new Date(a.departureTime) - new Date(b.departureTime));
+
+        res.json({ success: true, trips: bookableTrips });
     } catch (error) {
         console.error('[Trips Error]', error);
         res.status(500).json({ success: false, error: 'ดึงข้อมูลรอบรถล้มเหลว' });
@@ -633,7 +683,7 @@ exports.getPendingPayments = async (req, res) => {
                     source: 'payment',
                     passenger_name: p.queue?.passengerName || 'ไม่ระบุชื่อ',
                     amount: p.amount || 0,
-                    slip_url: p.slipUrl ? `${passengerBaseUrl}${p.slipUrl}` : null,
+                    slip_url: resolveSlipUrl(p.slipUrl, passengerBaseUrl),
                     queue_type: p.queue?.queueType,
                     payment_status: p.status,
                     ticket_code: p.queue?.ticketCode || p.queue?._id?.toString().slice(-4).toUpperCase(),
@@ -777,6 +827,10 @@ exports.getCurrentTrip = async (req, res) => {
         const trip = trips.length > 0 ? trips[0] : null;
 
         if (!trip) {
+            return res.status(200).json({ success: true, trip: null });
+        }
+
+        if (!trip.isSpecialRound && trip.departureTime < new Date()) {
             return res.status(200).json({ success: true, trip: null });
         }
 
@@ -1156,6 +1210,7 @@ exports.sendDepartureNotification = async (req, res) => {
 
         // 2) Forward to passenger backend via internal API (so passenger socket also broadcasts)
         const passengerApiUrl = process.env.PASSENGER_API_URL;
+        let passengerForwarded = false;
         if (passengerApiUrl) {
             try {
                 const departureSecret = process.env.DEPARTURE_NOTIFY_SECRET || '';
@@ -1173,12 +1228,22 @@ exports.sendDepartureNotification = async (req, res) => {
                     },
                     timeout: 5000
                 });
+                passengerForwarded = true;
             } catch (forwardErr) {
-                console.warn('[Notify] Could not forward to passenger backend:', forwardErr.message);
+                const status = forwardErr.response?.status;
+                const body = forwardErr.response?.data;
+                console.warn('[Notify] Could not forward to passenger backend:', status ? `status=${status}` : forwardErr.message, body || '');
             }
+        } else {
+            console.warn('[Notify] PASSENGER_API_URL is not configured; passenger backend will not receive departure alerts');
         }
 
-        res.json({ success: true, notifications_sent: true, method: 'socket_and_forward' });
+        res.json({
+            success: true,
+            notifications_sent: true,
+            passenger_forwarded: passengerForwarded,
+            method: 'socket_and_forward'
+        });
     } catch (error) {
         console.error('[Notify Error]', error);
         res.status(500).json({ success: false, error: 'ส่งการแจ้งเตือนล้มเหลว' });

@@ -89,6 +89,7 @@ const buildTripUpdate = (payload, routeId) => {
         departureTime: payload.departure_time || payload.departureTime,
         arrivalTime: payload.arrival_time ?? payload.arrivalTime ?? null,
         actualDepartureTime: payload.actual_departure_time ?? payload.actualDepartureTime ?? null,
+        isSpecialRound: Boolean(payload.is_special_round ?? payload.isSpecialRound ?? false),
         status: payload.status || "scheduled",
         seatCapacity,
         onlineQuota,

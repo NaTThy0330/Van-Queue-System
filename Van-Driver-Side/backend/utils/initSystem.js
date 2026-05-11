@@ -6,6 +6,7 @@
 
 const Route = require('../models/Route');
 const Trip = require('../models/Trip');
+const axios = require('axios');
 const {
     getBangkokDateTime,
     getBangkokTodayString
@@ -54,6 +55,14 @@ const SCHEDULE = [
     // Future Park: 07:00 – 20:00 every 30 min (27 slots)
     { routeCode: 'route_future', startH: 7, startM: 0, endH: 20, endM: 0, interval: 30 },
 ];
+
+// Extra test-only round for cloud validation. It stays in the same Trip collection
+// and uses the same booking flow as the regular timetable.
+const SPECIAL_TEST_ROUND = {
+    routeCode: 'route_mochit',
+    startH: 21,
+    startM: 30
+};
 
 // ==================== INIT ROUTES ====================
 
@@ -151,6 +160,69 @@ const initDailyTrips = async () => {
             console.log(`Generated ${tripsToInsert.length} missing trips for today.`);
         } else {
             console.log('All 89 slots for today already exist. No new trips generated.');
+        }
+
+        const specialRoute = routeMap[SPECIAL_TEST_ROUND.routeCode];
+        if (specialRoute) {
+            const specialDepartureTime = getBangkokDateTime(SPECIAL_TEST_ROUND.startH, SPECIAL_TEST_ROUND.startM);
+            const specialExists = await Trip.exists({
+                route: specialRoute._id,
+                departureTime: specialDepartureTime
+            });
+
+            if (!specialExists) {
+                const specialTrip = await Trip.create({
+                    route: specialRoute._id,
+                    departureTime: specialDepartureTime,
+                    seatCapacity: 13,
+                    availableSeats: 13,
+                    status: 'scheduled',
+                    vanRef: null,
+                    driverId: null,
+                    isSpecialRound: true
+                });
+                console.log('Generated special test round for today.');
+
+                const passengerApiUrl = process.env.PASSENGER_API_URL;
+                const departureSecret = process.env.DEPARTURE_NOTIFY_SECRET || '';
+                if (passengerApiUrl) {
+                    try {
+                        await axios.post(
+                            `${passengerApiUrl}/internal/trips/sync`,
+                            {
+                                trip_id: specialTrip._id.toString(),
+                                route: specialRoute.toObject(),
+                                departure_time: specialTrip.departureTime,
+                                arrival_time: null,
+                                actual_departure_time: null,
+                                status: specialTrip.status,
+                                seat_capacity: specialTrip.seatCapacity,
+                                online_quota: specialTrip.onlineQuota,
+                                walkin_quota: specialTrip.walkinQuota,
+                                available_seats: specialTrip.availableSeats,
+                                online_held_seats: specialTrip.onlineHeldSeats,
+                                online_booked_seats: specialTrip.onlineBookedSeats,
+                                driver_id: null,
+                                van_id: null,
+                                van_ref: null,
+                                cutoff_time: null,
+                                completed_at: null,
+                                is_special_round: true
+                            },
+                            {
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-departure-secret': departureSecret
+                                },
+                                timeout: 5000
+                            }
+                        );
+                        console.log('Synced special test round to passenger backend.');
+                    } catch (syncErr) {
+                        console.warn('Could not sync special test round to passenger backend:', syncErr.response?.status || syncErr.message);
+                    }
+                }
+            }
         }
     } catch (error) {
         console.error('Init Error (Trips):', error);

@@ -30,41 +30,57 @@ const broadcastDepartureAlert = async (req, res) => {
             route: req.body.route || null,
             departureTime: req.body.departure_time || req.body.departureTime || null,
         };
+        let tripRoomEmitted = false;
+        let passengerRoomEmitted = false;
+        let passengerCount = 0;
         console.log(`[Notify] Emitting departure:alert to trip:${tripId} room`);
         try {
             (0, socket_1.emitDepartureAlert)(alertPayload);
+            tripRoomEmitted = true;
             console.log(`[Notify] Successfully emitted to trip room`);
         } catch (emitErr) {
             console.error(`[Notify] Error emitting to trip room:`, emitErr.message);
         }
-        // Emit to each passenger room
-        console.log(`[Notify] Querying passengers for trip ${tripId}...`);
-        const passengers = await Queue_1.QueueModel.find({
-            trip: tripId,
-            status: { $ne: "cancelled" },
-        }).select("passenger");
-        console.log(`[Notify] Found ${passengers.length} passengers for trip ${tripId}`);
-        const io = req.app.get("io");
-        console.log(`[Notify] Socket.IO instance available: ${io ? "yes" : "no"}`);
-        if (io) {
-            const uniquePassengerIds = new Set(passengers
-                .map((queue) => queue.passenger?.toString?.())
-                .filter(Boolean));
-            console.log(`[Notify] Unique passenger recipients for trip ${tripId}: ${uniquePassengerIds.size}`);
-            for (const passengerId of uniquePassengerIds) {
-                console.log(`[Notify] Emitting departure:alert to passenger:${passengerId}`);
-                io.to(`passenger:${passengerId}`).emit("departure:alert", {
-                    trip_id: String(tripId),
-                    title,
-                    message,
-                    route: req.body.route || null,
-                    departure_time: req.body.departure_time || req.body.departureTime || null,
-                });
+        // Emit to each passenger room. Don't fail the whole request if this lookup breaks.
+        try {
+            console.log(`[Notify] Querying passengers for trip ${tripId}...`);
+            const passengers = await Queue_1.QueueModel.find({
+                trip: tripId,
+                status: { $ne: "cancelled" },
+            }).select("passenger");
+            passengerCount = passengers.length;
+            console.log(`[Notify] Found ${passengers.length} passengers for trip ${tripId}`);
+            const io = req.app.get("io");
+            console.log(`[Notify] Socket.IO instance available: ${io ? "yes" : "no"}`);
+            if (io) {
+                const uniquePassengerIds = new Set(passengers
+                    .map((queue) => queue.passenger?.toString?.())
+                    .filter(Boolean));
+                passengerCount = uniquePassengerIds.size;
+                console.log(`[Notify] Unique passenger recipients for trip ${tripId}: ${uniquePassengerIds.size}`);
+                for (const passengerId of uniquePassengerIds) {
+                    console.log(`[Notify] Emitting departure:alert to passenger:${passengerId}`);
+                    io.to(`passenger:${passengerId}`).emit("departure:alert", {
+                        trip_id: String(tripId),
+                        title,
+                        message,
+                        route: req.body.route || null,
+                        departure_time: req.body.departure_time || req.body.departureTime || null,
+                    });
+                }
+                passengerRoomEmitted = uniquePassengerIds.size > 0;
+                console.log(`[Notify] Completed emitting to all passenger rooms`);
             }
-            console.log(`[Notify] Completed emitting to all passenger rooms`);
+        } catch (passengerErr) {
+            console.error(`[Notify] Passenger room broadcast failed:`, passengerErr.message);
         }
         console.log(`[Notify] Departure alert broadcast for trip ${tripId} completed`);
-        res.json({ success: true });
+        res.json({
+            success: true,
+            trip_room_emitted: tripRoomEmitted,
+            passenger_room_emitted: passengerRoomEmitted,
+            passenger_count: passengerCount
+        });
     } catch (error) {
         console.error(`[Notify] Error in broadcastDepartureAlert:`, error.message);
         console.error("[Notify] Stack:", error.stack);
@@ -74,4 +90,5 @@ const broadcastDepartureAlert = async (req, res) => {
         res.status(500).json({ success: false, error: error.message || "Internal server error" });
     }
 };
+exports.broadcastDepartureAlert = broadcastDepartureAlert;
 //# sourceMappingURL=notificationsController.js.map
