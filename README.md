@@ -286,11 +286,6 @@ Recommended contribution workflow:
 
 If the project grows, you can move these rules into a separate `CONTRIBUTING.md` file later.
 
-## License
-
-No license file is currently included in this repository.
-
-If you plan to publish or share the project publicly, add a `LICENSE` file first and choose a license such as MIT or Apache 2.0.
 
 ## Project Structure
 
