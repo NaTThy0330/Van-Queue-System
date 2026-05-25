@@ -69,8 +69,6 @@ Van-Queue-System/
     └── docker-compose.yml
 ```
 
-If you want screenshots or GIFs for a presentation, add them under a folder like `docs/` and link them here.
-
 ## Built With
 
 - Node.js
