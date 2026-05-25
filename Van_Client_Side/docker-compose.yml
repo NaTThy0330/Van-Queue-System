@@ -46,11 +46,21 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017/vanbooking?replicaSet=rs0
       - PORT=4000
+      - JWT_SECRET=${JWT_SECRET:-change-this-secret-key-in-production-2026}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:8080}
+      - DEPARTURE_NOTIFY_SECRET=${DEPARTURE_NOTIFY_SECRET:-local-departure-secret}
+      - SEAT_HOLD_SECONDS=${SEAT_HOLD_SECONDS:-180}
+      - UNPAID_CUTOFF_MINUTES=${UNPAID_CUTOFF_MINUTES:-10}
+      - PAID_LATE_MINUTES=${PAID_LATE_MINUTES:-5}
+      - UPLOAD_DIR=${UPLOAD_DIR:-./uploads}
     ports:
       - "4000:4000"
     depends_on:
       mongo:
         condition: service_healthy
+      mongo-rs-init:
+        condition: service_completed_successfully
 
   frontend:
     build:
@@ -58,9 +68,13 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: http://localhost:4000
+        VITE_DRIVER_SOCKET_URL: http://localhost:5000
     container_name: frontend
     ports:
       - "8080:80"
+    environment:
+      - VITE_API_URL=http://localhost:4000
+      - VITE_DRIVER_SOCKET_URL=${VITE_DRIVER_SOCKET_URL:-http://localhost:5000}
     depends_on:
       - backend
 

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Backend Service
   driver-backend:
@@ -17,6 +15,12 @@ services:
       # Use the shared DB from the passenger stack (mongo on host:27018)
       - MONGO_URI=mongodb://host.docker.internal:27018/vanbooking?directConnection=true
       - MONGODB_URI=mongodb://host.docker.internal:27018/vanbooking?directConnection=true
+      - JWT_SECRET=${JWT_SECRET:-van-queue-secret-key-2026}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3001,http://localhost:8080}
+      - PASSENGER_BASE_URL=${PASSENGER_BASE_URL:-http://localhost:8080}
+      - PASSENGER_API_URL=${PASSENGER_API_URL:-http://localhost:4000}
+      - DEPARTURE_NOTIFY_SECRET=${DEPARTURE_NOTIFY_SECRET:-change-this-secret}
       - TZ=Asia/Bangkok
 
   # Frontend Service
@@ -31,6 +35,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - VITE_API_URL=${VITE_API_URL}
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:5000}
+      - VITE_SOCKET_URL=${VITE_SOCKET_URL:-http://localhost:5000}
     depends_on:
       - driver-backend
