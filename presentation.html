@@ -500,230 +500,6 @@
             border-color: var(--border-color);
             box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
         }
-
-        .deployment-banner {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-            padding: 18px 22px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(185, 28, 28, 0.08), rgba(234, 179, 8, 0.12));
-            border: 1px solid rgba(185, 28, 28, 0.14);
-            margin-bottom: 22px;
-        }
-
-        .deployment-banner strong {
-            color: var(--text-dark);
-            font-size: 18px;
-        }
-
-        .deployment-banner span {
-            color: var(--text-light);
-            font-size: 16px;
-        }
-
-        .deployment-grid {
-            display: grid;
-            grid-template-columns: 1.15fr 0.95fr;
-            gap: 24px;
-            width: 100%;
-            align-items: stretch;
-        }
-
-        .deployment-panel {
-            background: var(--bg-light);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 24px;
-            height: 100%;
-        }
-
-        .deployment-panel h3 {
-            margin-bottom: 14px;
-        }
-
-        .deployment-flow {
-            display: grid;
-            gap: 14px;
-        }
-
-        .deployment-step {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 14px 16px;
-        }
-
-        .deployment-step .step-index {
-            flex: 0 0 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .deployment-step .step-body strong {
-            display: block;
-            color: var(--text-dark);
-            margin-bottom: 3px;
-        }
-
-        .deployment-step .step-body span {
-            font-size: 16px;
-            line-height: 1.5;
-            color: var(--text-light);
-        }
-
-        .service-matrix {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        .service-card {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 16px;
-            min-height: 128px;
-        }
-
-        .service-card .service-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--primary-color);
-            background: rgba(185, 28, 28, 0.08);
-            padding: 6px 10px;
-            border-radius: 999px;
-            margin-bottom: 10px;
-        }
-
-        .service-card h4 {
-            font-size: 19px;
-            margin-bottom: 8px;
-            color: var(--text-dark);
-        }
-
-        .service-card p {
-            font-size: 16px;
-            margin-bottom: 0;
-        }
-
-        .deployment-footer {
-            margin-top: 18px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-
-        .deployment-footer .mini-stat {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 14px 16px;
-        }
-
-        .deployment-footer .mini-stat strong {
-            display: block;
-            color: var(--primary-color);
-            font-size: 18px;
-            margin-bottom: 4px;
-        }
-
-        .deployment-footer .mini-stat span {
-            color: var(--text-light);
-            font-size: 15px;
-            line-height: 1.4;
-        }
-
-        /* Tighter sizing for Azure Deployment slide 1 */
-        #slide12-azure-1 .deployment-banner {
-            padding: 12px 16px;
-            margin-bottom: 14px;
-        }
-
-        #slide12-azure-1 .deployment-banner strong {
-            font-size: 15px;
-        }
-
-        #slide12-azure-1 .deployment-banner span {
-            font-size: 13px;
-        }
-
-        #slide12-azure-1 .deployment-grid {
-            gap: 16px;
-        }
-
-        #slide12-azure-1 .deployment-panel {
-            padding: 16px;
-        }
-
-        #slide12-azure-1 .deployment-panel h3 {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        #slide12-azure-1 .deployment-flow {
-            gap: 10px;
-        }
-
-        #slide12-azure-1 .deployment-step {
-            padding: 10px 12px;
-            gap: 10px;
-        }
-
-        #slide12-azure-1 .deployment-step .step-index {
-            flex-basis: 28px;
-            height: 28px;
-            font-size: 14px;
-        }
-
-        #slide12-azure-1 .deployment-step .step-body strong {
-            font-size: 14px;
-        }
-
-        #slide12-azure-1 .deployment-step .step-body span {
-            font-size: 13px;
-            line-height: 1.35;
-        }
-
-        #slide12-azure-1 .service-matrix {
-            gap: 10px;
-        }
-
-        #slide12-azure-1 .service-card {
-            padding: 12px;
-            min-height: 104px;
-        }
-
-        #slide12-azure-1 .service-card .service-tag {
-            font-size: 12px;
-            padding: 4px 8px;
-            margin-bottom: 6px;
-        }
-
-        #slide12-azure-1 .service-card h4 {
-            font-size: 15px;
-            margin-bottom: 4px;
-        }
-
-        #slide12-azure-1 .service-card p {
-            font-size: 12px;
-            line-height: 1.3;
-        }
     </style>
 </head>
 <body>
@@ -912,35 +688,28 @@
 
 <!-- 7. Proposed Solution -->
 <div class="slide-container" id="slide7">
-    <h2 class="slide-title">สรุปผลทดสอบและแนวทางปรับปรุง (Proposed Solution)</h2>
+    <h2 class="slide-title">แนวคิดของระบบที่นำเสนอ (Proposed Solution)</h2>
     <div class="content-area">
         <div class="tiled-content" style="gap: 20px;">
             <div class="tile" style="flex: 1.5; border-top: 4px solid var(--primary-color);">
-                <h3>1. ผลการทดสอบโดยรวม</h3>
-                <p>ผลทดสอบผู้ใช้ 5 คนแสดงว่าระบบผ่านเกณฑ์หลักทั้งหมด</p>
+                <h3>1. นโยบายโควตาที่นั่ง (50/50 Quota)</h3>
+                <p>เพื่อความยุติธรรม ระบบแบ่งที่นั่งรถตู้ (N ที่นั่ง) เป็น 2 ส่วน:</p>
                 <ul style="padding-left: 20px; color: var(--text-light);">
-                    <li><strong>Completion Rate เฉลี่ย 95%</strong> สูงกว่าเกณฑ์ขั้นต่ำ 70%</li>
-                    <li><strong>SUS เฉลี่ย 78.5</strong> อยู่ในระดับ Good และสูงกว่าเกณฑ์ 68</li>
-                    <li><strong>Learnability 80%</strong> ผู้ใช้ใหม่ทำงานหลักได้ตั้งแต่ครั้งแรก</li>
-                    <li><strong>No Critical Error</strong> ในเส้นทางหลักของระบบ</li>
+                    <li><strong>50% สำหรับจองออนไลน์ (Online)</strong> จูงใจให้วางแผนล่วงหน้า ลดความแออัดหน้าท่า</li>
+                    <li><strong>50% สำหรับ Walk-in</strong> รองรับผู้โดยสารที่มาถึงหน้าท่าโดยตรง</li>
                 </ul>
             </div>
             <div class="tile" style="flex: 2; border-top: 4px solid var(--secondary-color);">
-                <h3>2. ปัญหาที่พบจากการใช้งาน</h3>
+                <h3>2. การแบ่งประเภทผู้โดยสาร (Priority Tiers)</h3>
                 <ul style="padding-left: 20px; color: var(--text-light); margin-bottom: 0;">
-                    <li><strong>ปุ่มอัปโหลดสลิป</strong> มองเห็นยาก ผู้ใช้บางคนต้องคลิกหลายครั้ง</li>
-                    <li><strong>คำศัพท์บางส่วน</strong> เช่น Run-up Queue และประเภทคิว ยังทำให้ผู้ใช้สับสน</li>
-                    <li><strong>ขั้นตอนตรวจสลิป</strong> และแจ้งเตือนบางช่วงยังมีความหน่วง</li>
+                    <li><strong><i class="fa-solid fa-star" style="color: var(--secondary-color);"></i> Online + Paid:</strong> จ่ายเงินแล้ว การันตีที่นั่ง (มาสายได้ 5 นาทีหลังรถออก)</li>
+                    <li><strong><i class="fa-solid fa-clock" style="color: #f97316;"></i> Online + Unpaid:</strong> จองแต่ยังไม่จ่าย (คิวรอ) ต้องมายืนยันและจ่ายเงินก่อนรถออก 15 นาที</li>
+                    <li><strong><i class="fa-solid fa-person-walking" style="color: #3b82f6;"></i> Walk-in + Paid:</strong> มาหน้าท่า จ่ายเงิน ได้คิวตามลำดับเวลาที่มาถึง</li>
                 </ul>
             </div>
             <div class="tile" style="flex: 1.5; border-top: 4px solid #10b981;">
-                <h3>3. แนวทางปรับปรุง</h3>
-                <p>เน้นทำให้ระบบเข้าใจง่ายขึ้น ใช้งานเร็วขึ้น และลดความหน่วงของงานหลัก</p>
-                <ul style="padding-left: 20px; color: var(--text-light);">
-                    <li>ปรับ UI ปุ่มและข้อความให้ชัดเจนขึ้น</li>
-                    <li>เพิ่ม Tooltip / คำอธิบายประเภทคิวและสถานะระหว่างรอ</li>
-                    <li>ลดงาน manual และปรับระบบหลังบ้านให้เสถียรขึ้น</li>
-                </ul>
+                <h3>3. Time-based Cutoff</h3>
+                <p>มีระบบ <strong>Run-up Queue</strong> อัตโนมัติ หาก Online+Unpaid ไม่มาแสดงตัวตามเวลา Cutoff ระบบจะตัดสิทธิ์และนำที่นั่งไปเติมให้กลุ่ม Walk-in เพื่อให้รถออกตรงเวลา</p>
             </div>
         </div>
     </div>
@@ -1109,181 +878,38 @@
     </div>
 </div>
 
-<!-- 12. Azure Deployment (Part 1) -->
-<div class="slide-container" id="slide12-azure-1">
-    <h2 class="slide-title">การนำระบบขึ้นใช้งานบน Microsoft Azure Container Apps</h2>
-    <div class="content-area">
-        <div class="deployment-banner">
-            <div>
-                <strong>Production Deployment</strong>
-                <span>หลังทดสอบบน Local Environment แล้ว ผู้จัดทำได้นำระบบขึ้นใช้งานจริงบน Azure เพื่อให้เข้าถึงผ่านอินเทอร์เน็ตได้</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px; color: var(--primary-color); font-weight: 600;">
-                <i class="fa-solid fa-cloud" style="font-size: 22px;"></i>
-                Azure Cloud
-            </div>
-        </div>
-
-        <div class="deployment-grid">
-            <div class="deployment-panel">
-                <h3>Pipeline การ Deploy</h3>
-                <div class="deployment-flow">
-                    <div class="deployment-step">
-                        <div class="step-index">1</div>
-                        <div class="step-body">
-                            <strong>Build Docker Image</strong>
-                            <span>สร้าง Image แยกตาม Service ได้แก่ Booking Frontend, Booking Backend, Driver Frontend และ Driver Backend</span>
-                        </div>
-                    </div>
-                    <div class="deployment-step">
-                        <div class="step-index">2</div>
-                        <div class="step-body">
-                            <strong>Push ไปยัง Azure Container Registry (ACR)</strong>
-                            <span>จัดเก็บ Image แบบส่วนกลาง เพื่อให้ Azure Container Apps ดึงไปใช้งานได้อย่างเป็นระเบียบ</span>
-                        </div>
-                    </div>
-                    <div class="deployment-step">
-                        <div class="step-index">3</div>
-                        <div class="step-body">
-                            <strong>Create Azure Container Apps</strong>
-                            <span>กำหนด CPU, Memory, Ingress และ Environment Variables สำหรับแต่ละ Service แยกจากกัน</span>
-                        </div>
-                    </div>
-                    <div class="deployment-step">
-                        <div class="step-index">4</div>
-                        <div class="step-body">
-                            <strong>เชื่อมต่อผ่าน REST API / Socket.IO</strong>
-                            <span>Frontend และ Backend สื่อสารผ่าน URL ของ Azure Container Apps ที่ Deploy จริงแล้ว</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="deployment-panel">
-                <h3>บริการที่ Deploy แยกกัน</h3>
-                <div class="service-matrix">
-                    <div class="service-card">
-                        <div class="service-tag"><i class="fa-solid fa-user"></i> Passenger</div>
-                        <h4>booking-frontend</h4>
-                        <p>หน้าจอผู้โดยสารบนเว็บ ใช้จองคิวและติดตามสถานะการเดินทาง</p>
-                    </div>
-                    <div class="service-card">
-                        <div class="service-tag"><i class="fa-solid fa-server"></i> API</div>
-                        <h4>booking-backend</h4>
-                        <p>ดูแลการจองคิว การชำระเงิน และการแจ้งเตือน</p>
-                    </div>
-                    <div class="service-card">
-                        <div class="service-tag"><i class="fa-solid fa-van-shuttle"></i> Driver</div>
-                        <h4>driver-frontend</h4>
-                        <p>หน้าจอสำหรับคนขับ ใช้จัดการคิว ตรวจสลิป และดูสถานะรถ</p>
-                    </div>
-                    <div class="service-card">
-                        <div class="service-tag"><i class="fa-solid fa-gears"></i> Control</div>
-                        <h4>driver-backend</h4>
-                        <p>จัดการรอบรถ ตรวจสอบข้อมูล และอัปเดตสถานะในระบบหลังบ้าน</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 13. Azure Deployment (Part 2) -->
-<div class="slide-container" id="slide13-azure-2">
-    <h2 class="slide-title">ประเด็นสำคัญของการ Deploy บน Azure</h2>
-    <div class="content-area">
-        <div style="width: 100%; margin-bottom: 18px; padding: 16px; background: white; border: 1px dashed var(--border-color); border-radius: 14px;">
-            <p style="margin: 0; font-weight: 600; color: var(--text-dark);">จุดสำคัญที่กรรมการควรทราบ</p>
-            <p style="margin: 6px 0 0 0; font-size: 18px;">ระบบถูกแยกเป็น Container หลายตัว ทำให้ Scale ได้อิสระ ดูแลง่าย และอัปเดตเวอร์ชันได้โดยไม่กระทบบริการอื่น</p>
-        </div>
-
-        <div class="deployment-footer" style="width: 100%; margin-top: 0;">
-            <div class="mini-stat">
-                <strong>Auto Scale</strong>
-                <span>รองรับการปรับขนาดอัตโนมัติตามโหลดของผู้ใช้</span>
-            </div>
-            <div class="mini-stat">
-                <strong>Public Access</strong>
-                <span>เปิดใช้งานผ่าน Ingress เพื่อเข้าถึงได้จากอินเทอร์เน็ต</span>
-            </div>
-            <div class="mini-stat">
-                <strong>Secure Config</strong>
-                <span>เก็บค่า Database URL, JWT Secret และ API Endpoint ผ่าน Environment Variables</span>
-            </div>
-            <div class="mini-stat">
-                <strong>Production-like</strong>
-                <span>สภาพแวดล้อมใกล้เคียง Production และลดปัญหาแตกต่างระหว่าง Local กับ Cloud</span>
-            </div>
-        </div>
-
-        <div class="deployment-panel" style="width: 100%; margin-top: 18px;">
-            <h3>สรุปการเชื่อมต่อระหว่างระบบ</h3>
-            <div class="deployment-flow" style="grid-template-columns: 1fr 1fr; display: grid;">
-                <div class="deployment-step">
-                    <div class="step-index">1</div>
-                    <div class="step-body">
-                        <strong>Passenger Flow</strong>
-                        <span>Booking Frontend ติดต่อ Booking Backend ผ่าน REST API และแจ้งเตือนแบบ Real-time ด้วย Socket.IO</span>
-                    </div>
-                </div>
-                <div class="deployment-step">
-                    <div class="step-index">2</div>
-                    <div class="step-body">
-                        <strong>Driver Flow</strong>
-                        <span>Driver Frontend ติดต่อ Driver Backend เพื่อจัดการรอบรถ ตรวจสอบสลิป และอัปเดตสถานะรถ</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 14. Testing & Evaluation -->
+<!-- 12. Testing & Evaluation -->
 <div class="slide-container" id="slide12">
     <h2 class="slide-title">การทดสอบและประเมินผล (Usability Testing)</h2>
     <div class="content-area">
         <div class="two-column">
             <div>
-                <h3>สรุปผลการประเมิน</h3>
-                <p>ทดสอบกับผู้ใช้ตัวแทน 5 คน พบว่าระบบผ่านเกณฑ์หลักและใช้งานได้จริงในภาพรวม</p>
+                <h3>วิธีการประเมิน</h3>
+                <p>ทดสอบกับกลุ่มตัวแทนผู้ใช้งานจำนวน 6 คน (นักศึกษา มธ.) โดยใช้ System Usability Scale (SUS) และประเมินผ่าน 2 งานหลัก:</p>
                 <ul style="margin-bottom: 20px;">
-                    <li><strong>Completion Rate เฉลี่ย 95%</strong> สูงกว่าเกณฑ์ 70%</li>
-                    <li><strong>SUS เฉลี่ย 78.5</strong> อยู่ในระดับ Good</li>
-                    <li><strong>Learnability 80%</strong> ผู้ใช้ใหม่ทำได้ตั้งแต่ครั้งแรก</li>
-                    <li><strong>No Critical Error</strong> ในเส้นทางหลัก</li>
+                    <li><strong>Task 1:</strong> จองคิวและอัปโหลดสลิป</li>
+                    <li><strong>Task 2:</strong> ตรวจสอบจำนวนคิวคงเหลือ</li>
                 </ul>
                 
                 <div style="background: var(--bg-light); border-left: 4px solid var(--primary-color); padding: 15px; border-radius: 8px;">
-                    <p style="margin: 0; font-weight: bold; color: var(--text-dark);">ภาพรวมที่ได้จากการทดสอบ</p>
-                    <p style="margin: 0; font-size: 16px;">ระบบทำงานได้ดี แต่ยังมีจุดที่ควรปรับ UI, คำศัพท์ และความหน่วงของขั้นตอนอัปโหลด/ตรวจสลิป</p>
+                    <p style="margin: 0; font-weight: bold; color: var(--text-dark);">เกณฑ์ผ่าน (Success Criteria):</p>
+                    <p style="margin: 0; font-size: 16px;">Completion Rate > 70%, ไม่มี Critical Error, Task Time ≤ 60 วินาที</p>
                 </div>
             </div>
             
             <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
-                <h3 style="font-size: 20px; text-align: center;">ผลเด่นจากการทดสอบ</h3>
+                <h3 style="font-size: 20px; text-align: center;">ผลการทดสอบ (Completion Rate & Median Time)</h3>
                 <div class="bar-chart">
                     <div class="bar-row">
-                        <div class="bar-label">จองคิวแบบ Paid<br><span style="font-size: 14px; font-weight: normal;">Median Time: 58 วินาที</span></div>
+                        <div class="bar-label">Task 1: จองคิว/จ่ายเงิน<br><span style="font-size: 14px; font-weight: normal;">(Median Time: 54 วินาที)</span></div>
                         <div class="bar-track">
-                            <div class="bar-fill" style="width: 84%;">80% สำเร็จ</div>
+                            <div class="bar-fill" style="width: 84%;">84% สำเร็จ</div>
                         </div>
                     </div>
                     <div class="bar-row">
-                        <div class="bar-label">จองคิวแบบ Unpaid<br><span style="font-size: 14px; font-weight: normal;">Median Time: 42 วินาที</span></div>
+                        <div class="bar-label">Task 2: ตรวจสอบคิว<br><span style="font-size: 14px; font-weight: normal;">(Median Time: 28 วินาที)</span></div>
                         <div class="bar-track">
-                            <div class="bar-fill" style="width: 84%;">100% สำเร็จ</div>
-                        </div>
-                    </div>
-                    <div class="bar-row">
-                        <div class="bar-label">ตรวจสอบคิวคงเหลือ<br><span style="font-size: 14px; font-weight: normal;">Median Time: 27 วินาที</span></div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: 92%;">100% สำเร็จ</div>
-                        </div>
-                    </div>
-                    <div class="bar-row">
-                        <div class="bar-label">ตรวจสอบสลิปฝั่ง Driver<br><span style="font-size: 14px; font-weight: normal;">Median Time: 49 วินาที</span></div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: 80%;">80% สำเร็จ</div>
+                            <div class="bar-fill" style="width: 92%;">92% สำเร็จ</div>
                         </div>
                     </div>
                 </div>
@@ -1292,31 +918,31 @@
     </div>
 </div>
 
-<!-- 15. Results & Discussion -->
+<!-- 13. Results & Discussion -->
 <div class="slide-container" id="slide13">
     <h2 class="slide-title">สรุปปัญหาที่พบจากผู้ใช้ (Results & Discussion)</h2>
     <div class="content-area">
         <div class="tiled-content">
             <div class="tile">
                 <div class="icon" style="font-size: 36px;"><i class="fa-solid fa-magnifying-glass"></i></div>
-                <h3 style="font-size: 22px;">ปรับปุ่ม UI </h3>
-                <p style="font-size: 16px;"><strong>ปัญหา:</strong> ผู้ใช้หลายคนในการใช้งานครั้งแรกยังสับสน ว่าต้องกดที่ตรงไหน อาจจะมีบางหน้าที่ยังไม่ชัดเจน<br><strong>แนวทางแก้ไข:</strong> ปรับปรุง UI เพิ่มคอนทราสต์ของปุ่ม และจัดวางให้อยู่ในจุดที่มองเห็นได้ชัดเจนทันที</p>
+                <h3 style="font-size: 22px;">ปุ่มอัปโหลดสลิปมองเห็นยาก</h3>
+                <p style="font-size: 16px;"><strong>ปัญหา:</strong> ผู้ใช้หลายคนต้องใช้เวลาหาปุ่มอัปโหลดสลิป<br><strong>แนวทางแก้ไข:</strong> ปรับปรุง UI เพิ่มคอนทราสต์ของปุ่ม และจัดวางให้อยู่ในจุดที่มองเห็นได้ชัดเจนทันที</p>
             </div>
             <div class="tile">
                 <div class="icon" style="font-size: 36px;"><i class="fa-solid fa-language"></i></div>
                 <h3 style="font-size: 22px;">ความสับสนเรื่องคำศัพท์</h3>
-                <p style="font-size: 16px;"><strong>ปัญหา:</strong> ผู้ใช้ไม่เข้าใจคำว่า "Run-up Queue" และประเภทคิว (Paid/Unpaid)<br><strong>แนวทางแก้ไข:</strong> เพิ่มสาธิตวิธีการใช้งานระบบในตอนเริ่มต้นและปรับใช้ภาษาไทยที่เข้าใจง่ายขึ้น</p>
+                <p style="font-size: 16px;"><strong>ปัญหา:</strong> ผู้ใช้ไม่เข้าใจคำว่า "Run-up Queue" และประเภทคิว (Paid/Unpaid)<br><strong>แนวทางแก้ไข:</strong> เพิ่มคำอธิบาย (Tooltip) และปรับใช้ภาษาไทยที่เข้าใจง่ายขึ้น</p>
             </div>
             <div class="tile">
                 <div class="icon" style="font-size: 36px;"><i class="fa-solid fa-stopwatch"></i></div>
-                <h3 style="font-size: 22px;"> ระบบมีความหนน่วง</h3>
-                <p style="font-size: 16px;"><strong>ปัญหา: บางครั้งเมื่อมีการอัปเดตคิว ระบบยังไม่แสดงผลทันที</strong> <br><strong>แนวทางแก้ไข:</strong> ใช้ socket.io ในการสื่อสารแบบเรียลไทม์ ทำให้อัปเดตคิวหรือข้อมูลอื่นๆได้ทันที</p>
+                <h3 style="font-size: 22px;">ความหน่วงของระบบ</h3>
+                <p style="font-size: 16px;"><strong>ปัญหา:</strong> ขั้นตอนอัปโหลดไฟล์สลิปใช้เวลาโหลดนาน<br><strong>แนวทางแก้ไข:</strong> จำเป็นต้องทำ Image Compression ก่อนอัปโหลด และปรับปรุง Caching ในอนาคต</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 16. Conclusion -->
+<!-- 14. Conclusion -->
 <div class="slide-container" id="slide14">
     <h2 class="slide-title">สรุปผลการดำเนินงาน (Conclusion)</h2>
     <div class="content-area">
@@ -1324,12 +950,12 @@
             <i class="fa-solid fa-award" style="font-size: 60px; color: var(--secondary-color); margin-bottom: 20px;"></i>
             <h3 style="font-size: 28px; margin-bottom: 20px;">ระบบเปลี่ยนกระดาษสู่ดิจิทัลได้สำเร็จ</h3>
             <p style="font-size: 22px;">โครงงานนี้บรรลุเป้าหมายในการพัฒนาระบบต้นแบบที่ช่วยเปลี่ยนการเข้าคิวกระดาษหน้าท่ารถ ให้กลายเป็น<strong>ระบบออนไลน์ที่โปร่งใส</strong></p>
-            <p style="font-size: 22px;">ระบบ <strong>Time-based Cutoff</strong> และ <strong>60/40 Quota</strong> ช่วยรักษาความเป็นธรรมระหว่างผู้โดยสารจองล่วงหน้าและ Walk-in พร้อมลดภาระงานของคนขับได้อย่างเป็นรูปธรรม</p>
+            <p style="font-size: 22px;">ระบบ <strong>Time-based Cutoff</strong> และ <strong>50/50 Quota</strong> ช่วยรักษาความเป็นธรรมระหว่างผู้โดยสารจองล่วงหน้าและ Walk-in พร้อมลดภาระงานของคนขับได้อย่างเป็นรูปธรรม</p>
         </div>
     </div>
 </div>
 
-<!-- 17. Limitations -->
+<!-- 15. Limitations -->
 <div class="slide-container" id="slide15">
     <h2 class="slide-title">ข้อจำกัดของระบบ (Limitations)</h2>
     <div class="content-area">
@@ -1360,7 +986,7 @@
     </div>
 </div>
 
-<!-- 18. Future Work -->
+<!-- 16. Future Work -->
 <div class="slide-container" id="slide16">
     <h2 class="slide-title">แนวทางการพัฒนาต่อยอด (Future Work)</h2>
     <div class="content-area">
@@ -1384,7 +1010,7 @@
     </div>
 </div>
 
-<!-- 19. Q&A -->
+<!-- 17. Q&A -->
 <div class="slide-container" id="slide17">
     <div class="qa-layout">
         <h2>Q & A</h2>
