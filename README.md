@@ -1,93 +1,142 @@
 # Van Queue System
 
-ระบบจัดการคิวรถตู้สำหรับ 2 ฝั่งหลัก
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](#installation)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=nodedotjs&logoColor=white)](#built-with)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)](#built-with)
 
-- `Van_Client_Side` ฝั่งผู้โดยสาร
-- `Van-Driver-Side` ฝั่งคนขับ
+## Table of Contents
 
-โปรเจ็กต์นี้ออกแบบมาให้รันด้วย Docker Compose เป็นหลัก เพื่อให้เริ่มใช้งานได้ง่ายบนเครื่องใหม่ โดยไม่ต้องติดตั้ง MongoDB หรือรัน backend ทีละฝั่งด้วยมือ
+- [Description](#description)
+- [Key Features](#key-features)
+- [Visuals](#visuals)
+- [Built With](#built-with)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+- [Project Structure](#project-structure)
+- [Environment Variables](#environment-variables)
+- [Troubleshooting](#troubleshooting)
 
-## ภาพรวม
+## Description
 
-สถาปัตยกรรมของระบบแบ่งเป็น 3 ส่วนหลัก
+Van Queue System is a van queue and booking management platform for both passenger and driver workflows.
 
-1. MongoDB สำหรับเก็บข้อมูลคิว, ผู้ใช้, รถ, และการจอง
-2. Backend API สำหรับผู้โดยสาร
-3. Backend และ Frontend สำหรับคนขับ
+The repository contains two related applications:
 
-### พอร์ตที่ใช้
+- `Van_Client_Side` for passengers
+- `Van-Driver-Side` for drivers
 
-- ผู้โดยสาร frontend: `http://localhost:8080`
-- ผู้โดยสาร backend: `http://localhost:4000`
-- คนขับ frontend: `http://localhost:3001`
-- คนขับ backend: `http://localhost:5000`
-- MongoDB ของฝั่งผู้โดยสาร: `mongodb://localhost:27018`
+The main goal is to manage queueing, booking, route data, and live status updates in a single system that can be run locally with Docker Compose, including the database layer.
 
-## สิ่งที่ต้องมี
+## Key Features
 
-- Docker Desktop หรือ Docker Engine ที่มี Docker Compose v2
-- Git
-- พื้นที่ว่างสำหรับสร้าง volume ของ MongoDB
-- ถ้าจะรันบน Linux และฝั่งคนขับต้องเชื่อม Mongo ของ host ให้แน่ใจว่า `host.docker.internal` ใช้งานได้
+- Passenger-side web app with booking and queue management
+- Driver-side web app with operational controls
+- Backend APIs for each side
+- MongoDB-based persistence
+- Socket.IO support for live updates
+- Docker Compose setup for one-command startup
+- Environment-based configuration for local and production-style runs
 
-## โครงสร้างโปรเจ็กต์
+## Visuals
+
+### System Overview
+
+```mermaid
+flowchart LR
+  PassengerUI[Passenger Frontend] --> PassengerAPI[Passenger Backend]
+  DriverUI[Driver Frontend] --> DriverAPI[Driver Backend]
+  PassengerAPI --> Mongo[(MongoDB)]
+  DriverAPI --> Mongo
+  DriverUI <--> DriverAPI
+  PassengerUI <--> PassengerAPI
+```
+
+### Repository Layout
 
 ```text
 Van-Queue-System/
 ├── Van_Client_Side/
 │   ├── backend/
 │   ├── frontend/
-│   └── docker-compose.yml
+│   ├── docker-compose.yml
+│   ├── routes.json
+│   └── trips.json
 └── Van-Driver-Side/
     ├── backend/
     ├── frontend/
     └── docker-compose.yml
 ```
 
-## วิธีรันแบบ Docker
+If you want screenshots or GIFs for a presentation, add them under a folder like `docs/` and link them here.
 
-> แนะนำให้รันฝั่งผู้โดยสารก่อน เพราะมี MongoDB รวมอยู่ใน compose และฝั่งคนขับจะเชื่อมกับฐานข้อมูลนั้น
+## Built With
 
-### 1) รันฝั่งผู้โดยสาร
+- Node.js
+- Express
+- MongoDB
+- React
+- Vite
+- Socket.IO
+- Docker
+- Docker Compose
+- Tailwind CSS
+
+## Installation
+
+### Prerequisites
+
+- Docker Desktop or Docker Engine with Docker Compose v2
+- Git
+- A terminal that can run shell commands
+
+### Clone the repository
+
+```bash
+git clone <your-repo-url>
+cd Van-Queue-System
+```
+
+### Run the passenger side first
+
+The passenger stack includes MongoDB, so run it before the driver stack.
 
 ```bash
 cd Van_Client_Side
 docker compose up -d --build
 ```
 
-สิ่งที่ compose นี้จะเปิดให้:
+This starts:
 
 - `mongo`
 - `mongo-rs-init`
 - `backend`
 - `frontend`
 
-เปิดใช้งานได้ที่:
-
-- Frontend: `http://localhost:8080`
-- API: `http://localhost:4000`
-
-### 2) รันฝั่งคนขับ
+### Then run the driver side
 
 ```bash
 cd ../Van-Driver-Side
 docker compose up -d --build
 ```
 
-เปิดใช้งานได้ที่:
+### Open the apps
 
-- Frontend: `http://localhost:3001`
-- API: `http://localhost:5000`
+- Passenger frontend: `http://localhost:8080`
+- Passenger API: `http://localhost:4000`
+- Driver frontend: `http://localhost:3001`
+- Driver API: `http://localhost:5000`
 
-## ค่า Environment ที่ใช้
+## Environment Variables
 
-ตอนนี้ compose ถูกตั้งค่าให้มีค่า default ใช้งานได้เลย แต่ถ้าต้องการแก้ค่าเอง ให้ใช้ตัวแปรต่อไปนี้
+The repository is already configured with sensible defaults in `docker-compose.yml`, but you can override them with `.env.docker` if needed.
 
-### ฝั่งผู้โดยสาร (`Van_Client_Side`)
+### Passenger side
 
 Backend:
 
-- `MONGO_URI` หรือ `MONGODB_URI`
+- `MONGO_URI` or `MONGODB_URI`
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `CLIENT_URL`
@@ -102,7 +151,7 @@ Frontend:
 - `VITE_API_URL`
 - `VITE_DRIVER_SOCKET_URL`
 
-ค่าแนะนำสำหรับเครื่อง local:
+Example local values:
 
 ```env
 JWT_SECRET=change-this-secret-key-in-production-2026
@@ -112,11 +161,11 @@ VITE_API_URL=http://localhost:4000
 VITE_DRIVER_SOCKET_URL=http://localhost:5000
 ```
 
-### ฝั่งคนขับ (`Van-Driver-Side`)
+### Driver side
 
 Backend:
 
-- `MONGO_URI` หรือ `MONGODB_URI`
+- `MONGO_URI` or `MONGODB_URI`
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `CLIENT_URL`
@@ -129,7 +178,7 @@ Frontend:
 - `VITE_API_URL`
 - `VITE_SOCKET_URL`
 
-ค่าแนะนำสำหรับเครื่อง local:
+Example local values:
 
 ```env
 JWT_SECRET=van-queue-secret-key-2026
@@ -141,75 +190,130 @@ VITE_API_URL=http://localhost:5000
 VITE_SOCKET_URL=http://localhost:5000
 ```
 
-## ไฟล์ `.env.docker`
+### Docker env files
 
-ในแต่ละโฟลเดอร์มีไฟล์ `.env.docker` ไว้เป็นจุดเริ่มต้นสำหรับการปรับค่าเอง
+You can also use the prepared files:
 
 - `Van_Client_Side/.env.docker`
 - `Van-Driver-Side/.env.docker`
 
-ถ้าต้องการใช้ไฟล์เหล่านี้จริง ๆ สามารถรันแบบนี้ได้
+Example:
 
 ```bash
 docker compose --env-file .env.docker up -d --build
 ```
 
-## ถ้าต้องการรันแบบ Local Dev
+## Usage
 
-กรณีไม่ใช้ Docker ให้ติดตั้ง Node.js และ npm แล้วรันแยกแต่ละฝั่ง
-
-### ฝั่งผู้โดยสาร
+### Start the stacks
 
 ```bash
-cd Van_Client_Side/backend
-npm install
-npm run dev
+cd Van_Client_Side
+docker compose up -d --build
 
-cd ../frontend
-npm install
-npm run dev
+cd ../Van-Driver-Side
+docker compose up -d --build
 ```
 
-### ฝั่งคนขับ
-
-```bash
-cd Van-Driver-Side/backend
-npm install
-npm run dev
-
-cd ../frontend
-npm install
-npm run dev
-```
-
-## คำสั่งที่ใช้บ่อย
-
-### ดู log
+### Check logs
 
 ```bash
 docker compose logs -f
 ```
 
-### หยุดระบบ
+### Stop the services
 
 ```bash
 docker compose down
 ```
 
-### ล้างฐานข้อมูลของฝั่งผู้โดยสาร
+### Remove the passenger database volume
 
 ```bash
 docker compose down -v
 ```
 
-## การแก้ปัญหาเบื้องต้น
+### Local development without Docker
 
-- ถ้า backend ต่อ MongoDB ไม่ได้ ให้ตรวจว่า Mongo container ขึ้นปกติและพอร์ต `27018` ไม่ชนกับโปรแกรมอื่น
-- ถ้าเปิดฝั่งคนขับบน Linux แล้ว `host.docker.internal` ใช้งานไม่ได้ ให้เพิ่ม host mapping หรือปรับ `MONGO_URI` ให้ชี้ไปยังเครื่อง host ให้ถูกต้อง
-- ถ้า frontend เรียก API ไม่ได้ ให้เช็ก `VITE_API_URL` และ `VITE_SOCKET_URL`
+Passenger backend:
 
-## หมายเหตุ
+```bash
+cd Van_Client_Side/backend
+npm install
+npm run dev
+```
 
-- Compose ของฝั่งผู้โดยสารมี `mongo-rs-init` เพื่อเปิดใช้งาน replica set `rs0`
-- ฝั่งคนขับใช้ MongoDB ที่รันอยู่บนเครื่อง host ผ่านพอร์ต `27018`
-- ถ้าต้องการข้อมูลตัวอย่างเพิ่มเติม สามารถดูสคริปต์ seed ของฝั่งคนขับใน `Van-Driver-Side/backend/scripts/seed.js`
+Passenger frontend:
+
+```bash
+cd Van_Client_Side/frontend
+npm install
+npm run dev
+```
+
+Driver backend:
+
+```bash
+cd Van-Driver-Side/backend
+npm install
+npm run dev
+```
+
+Driver frontend:
+
+```bash
+cd Van-Driver-Side/frontend
+npm install
+npm run dev
+```
+
+## Contributing
+
+Contributions are welcome.
+
+If you want to help, please:
+
+1. Fork or create a branch.
+2. Make changes in a focused way.
+3. Test the app with Docker Compose if your change affects startup or env config.
+4. Open a pull request with a clear summary of what changed.
+
+Recommended contribution workflow:
+
+- Keep commits small and descriptive
+- Do not overwrite unrelated user changes
+- Update the README if your change affects setup or usage
+
+If the project grows, you can move these rules into a separate `CONTRIBUTING.md` file later.
+
+## License
+
+No license file is currently included in this repository.
+
+If you plan to publish or share the project publicly, add a `LICENSE` file first and choose a license such as MIT or Apache 2.0.
+
+## Project Structure
+
+```text
+Van-Queue-System/
+├── Van_Client_Side/
+│   ├── backend/
+│   ├── frontend/
+│   ├── docker-compose.yml
+│   ├── .env.docker
+│   ├── routes.json
+│   └── trips.json
+└── Van-Driver-Side/
+    ├── backend/
+    ├── frontend/
+    ├── docker-compose.yml
+    └── .env.docker
+```
+
+## Troubleshooting
+
+- If the backend cannot connect to MongoDB, make sure the passenger stack is running first.
+- If the driver stack cannot see the passenger database on Linux, verify `host.docker.internal` support or update the Mongo URI.
+- If the frontend cannot reach the API, verify `VITE_API_URL` and `VITE_SOCKET_URL`.
+- If you want to reset the passenger database, run `docker compose down -v` inside `Van_Client_Side`.
+

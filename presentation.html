@@ -1,0 +1,1400 @@
+ <!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thesis Presentation - Online Van Queue Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 1. THE SETUP */
+        * {
+            box-sizing: border-box;
+        }
+
+        p {
+            margin: 0;
+            margin-bottom: 15px;
+        }
+
+        body {
+            background-color: #f1f5f9; /* Light slate background */
+            display: grid;
+            gap: 30px;
+            grid-template-columns: 1fr;
+            margin: 0;
+            min-height: 100vh;
+            padding: 30px 0;
+            place-items: center;
+        }
+
+        /* THAMMASAT THEME COLORS */
+        :root {
+            --primary-color: #b91c1c; /* TU Red */
+            --secondary-color: #eab308; /* TU Yellow */
+            --text-dark: #0f172a;
+            --text-light: #475569;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        .slide-container {
+            align-items: center;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+            display: flex;
+            flex-direction: column;
+            font-family: 'Prompt', sans-serif;
+            height: 720px;
+            justify-content: center;
+            overflow: hidden;
+            padding: 60px;
+            position: relative;
+            width: 1280px;
+        }
+
+        /* 1.1 BACKGROUND STYLING (TU Pattern) */
+        .slide-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            z-index: 0;
+        }
+
+        .slide-container > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 2. CONSISTENT TYPOGRAPHY */
+        .slide-container h1,
+        .slide-container h2,
+        .slide-container h3 {
+            color: var(--text-dark);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .slide-container p,
+        .slide-container li,
+        .slide-container th,
+        .slide-container td {
+            color: var(--text-light);
+            font-weight: 300;
+            line-height: 1.6;
+            font-size: 20px;
+        }
+
+        /* Consistent Font Sizes */
+        .slide-container h1 {
+            font-size: 56px;
+            line-height: 1.3;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .slide-container .slide-title {
+            font-size: 42px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: left;
+            width: 100%;
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .slide-container h3 {
+            font-size: 26px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .slide-container .subtitle {
+            font-size: 26px;
+            margin: 20px auto;
+            color: var(--text-light);
+        }
+
+        .slide-container .content-area {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: flex-start;
+            width: 100%;
+            padding-top: 20px;
+        }
+
+        /* 3. LAYOUT DEFINITIONS */
+        .title-layout {
+            text-align: center;
+            max-width: 1000px;
+        }
+
+        .two-column {
+            align-items: flex-start;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            width: 100%;
+        }
+
+        .two-column.tiled > div {
+            background-color: var(--bg-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 40px;
+        }
+
+        .two-column ul {
+            list-style: disc;
+            margin: 0;
+            padding-left: 25px;
+        }
+
+        .two-column li {
+            margin-bottom: 15px;
+        }
+
+        .image-wrapper {
+            border-radius: 12px;
+            height: 380px;
+            max-width: 100%;
+            overflow: hidden;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #e2e8f0;
+        }
+
+        .image-wrapper img {
+            height: 100%;
+            max-width: 100%;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .tiled-content {
+            align-items: stretch;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .tile {
+            align-items: flex-start;
+            background-color: var(--bg-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 30px;
+            transition: transform 0.2s;
+        }
+
+        .tile .icon {
+            color: var(--primary-color);
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .bullet-list {
+            width: 100%;
+        }
+
+        .bullet-list ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .bullet-list li {
+            position: relative;
+            background: var(--bg-light);
+            padding: 25px 25px 25px 70px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .bullet-list i {
+            color: var(--primary-color);
+            font-size: 28px;
+            left: 20px;
+            position: absolute;
+            top: 25px;
+        }
+
+        .bullet-list li strong {
+            color: var(--text-dark);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 22px;
+        }
+
+        .highlight-numbers-layout > div:first-child {
+            flex: 0 0 40%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .highlight-numbers-layout .number {
+            color: var(--primary-color);
+            font-size: 120px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .highlight-numbers-layout .number-label {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        /* Table Layout */
+        .table-layout {
+            width: 100%;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-layout table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .table-layout th,
+        .table-layout td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 18px 24px;
+            text-align: left;
+        }
+
+        .table-layout th {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .compact-table {
+            margin-top: 8px;
+        }
+
+        .compact-table th,
+        .compact-table td {
+            padding: 12px 16px;
+            font-size: 17px;
+            line-height: 1.45;
+        }
+
+        .compact-table th {
+            font-size: 18px;
+        }
+
+        /* Timeline Layout */
+        .timeline-layout {
+            align-items: stretch;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            width: 100%;
+            padding: 40px 0;
+        }
+
+        .timeline-layout .timeline-line {
+            background-color: var(--border-color);
+            height: 4px;
+            left: 0;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-2px);
+            width: 100%;
+            z-index: 0;
+        }
+
+        .timeline-layout.hide-line .timeline-line {
+            display: none;
+        }
+
+        .timeline-item {
+            position: relative;
+            text-align: center;
+            width: 23%;
+            z-index: 1;
+        }
+
+        .timeline-item .icon-circle {
+            background-color: #fff;
+            border-radius: 50%;
+            border: 4px solid var(--primary-color);
+            height: 60px;
+            width: 60px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--primary-color);
+            background: white;
+        }
+
+        /* Q&A Layout */
+        .qa-layout {
+            margin: 0 auto;
+            text-align: center;
+            width: 100%;
+            align-self: center;
+        }
+
+        .qa-layout h2 {
+            font-size: 96px;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+        }
+        
+        .author-box {
+            margin-top: 40px;
+            padding: 25px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            display: inline-block;
+            text-align: left;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .tech-badge {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+        }
+        
+        .screenshot-item {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .bar-label {
+            width: 200px;
+            font-weight: 500;
+        }
+        
+        .bar-track {
+            flex-grow: 1;
+            height: 30px;
+            background: var(--bg-light);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .demo-links {
+            margin-top: 22px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+        }
+
+        .demo-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary-color);
+            border: 1px solid transparent;
+            box-shadow: 0 10px 22px rgba(185, 28, 28, 0.22);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        }
+
+        .demo-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(185, 28, 28, 0.28);
+        }
+
+        .demo-button.secondary {
+            background: white;
+            color: var(--primary-color);
+            border-color: var(--border-color);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+        }
+
+        .deployment-banner {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 18px 22px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(185, 28, 28, 0.08), rgba(234, 179, 8, 0.12));
+            border: 1px solid rgba(185, 28, 28, 0.14);
+            margin-bottom: 22px;
+        }
+
+        .deployment-banner strong {
+            color: var(--text-dark);
+            font-size: 18px;
+        }
+
+        .deployment-banner span {
+            color: var(--text-light);
+            font-size: 16px;
+        }
+
+        .deployment-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.95fr;
+            gap: 24px;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .deployment-panel {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            height: 100%;
+        }
+
+        .deployment-panel h3 {
+            margin-bottom: 14px;
+        }
+
+        .deployment-flow {
+            display: grid;
+            gap: 14px;
+        }
+
+        .deployment-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+
+        .deployment-step .step-index {
+            flex: 0 0 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .deployment-step .step-body strong {
+            display: block;
+            color: var(--text-dark);
+            margin-bottom: 3px;
+        }
+
+        .deployment-step .step-body span {
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--text-light);
+        }
+
+        .service-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .service-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            min-height: 128px;
+        }
+
+        .service-card .service-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-color);
+            background: rgba(185, 28, 28, 0.08);
+            padding: 6px 10px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+        }
+
+        .service-card h4 {
+            font-size: 19px;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .service-card p {
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+
+        .deployment-footer {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .deployment-footer .mini-stat {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+
+        .deployment-footer .mini-stat strong {
+            display: block;
+            color: var(--primary-color);
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .deployment-footer .mini-stat span {
+            color: var(--text-light);
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        /* Tighter sizing for Azure Deployment slide 1 */
+        #slide12-azure-1 .deployment-banner {
+            padding: 12px 16px;
+            margin-bottom: 14px;
+        }
+
+        #slide12-azure-1 .deployment-banner strong {
+            font-size: 15px;
+        }
+
+        #slide12-azure-1 .deployment-banner span {
+            font-size: 13px;
+        }
+
+        #slide12-azure-1 .deployment-grid {
+            gap: 16px;
+        }
+
+        #slide12-azure-1 .deployment-panel {
+            padding: 16px;
+        }
+
+        #slide12-azure-1 .deployment-panel h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        #slide12-azure-1 .deployment-flow {
+            gap: 10px;
+        }
+
+        #slide12-azure-1 .deployment-step {
+            padding: 10px 12px;
+            gap: 10px;
+        }
+
+        #slide12-azure-1 .deployment-step .step-index {
+            flex-basis: 28px;
+            height: 28px;
+            font-size: 14px;
+        }
+
+        #slide12-azure-1 .deployment-step .step-body strong {
+            font-size: 14px;
+        }
+
+        #slide12-azure-1 .deployment-step .step-body span {
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        #slide12-azure-1 .service-matrix {
+            gap: 10px;
+        }
+
+        #slide12-azure-1 .service-card {
+            padding: 12px;
+            min-height: 104px;
+        }
+
+        #slide12-azure-1 .service-card .service-tag {
+            font-size: 12px;
+            padding: 4px 8px;
+            margin-bottom: 6px;
+        }
+
+        #slide12-azure-1 .service-card h4 {
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        #slide12-azure-1 .service-card p {
+            font-size: 12px;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 1. Title Slide -->
+<div class="slide-container" id="slide1">
+    <div class="title-layout">
+        <h1 style="font-size: 48px;">ระบบจัดการคิวรถตู้และติดตามสถานะรถแบบออนไลน์</h1>
+        <p class="subtitle" style="font-size: 28px; color: var(--secondary-color); font-weight: 500;">Online Van Queue Management and Vehicle Tracking System</p>
+        
+        <div class="author-box" style="margin-top: 60px;">
+            <p style="margin-bottom: 10px;"><strong>ผู้จัดทำ:</strong> นางสาว ณัฐิดา แซ่ตั้ง, นางสาว จิรัฏญา ทั่งจันทร์</p>
+            <p style="margin-bottom: 10px;"><strong>อาจารย์ที่ปรึกษา:</strong> ผศ.ดร.ทรงศักดิ์ รองวิริยะพานิช, ผศ.ดร.ปกรณ์ ลี้สุทธิพรชัย</p>
+            <p style="margin-bottom: 0; font-size: 18px; color: var(--text-light);">คณะวิทยาศาสตร์และเทคโนโลยี สาขาวิทยาการคอมพิวเตอร์ มหาวิทยาลัยธรรมศาสตร์ ปีการศึกษา 2568</p>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Background / Introduction -->
+<div class="slide-container" id="slide2">
+    <h2 class="slide-title">ที่มาและความสำคัญของปัญหา (Background)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <p>การเดินทางด้วยรถตู้ในมหาวิทยาลัยธรรมศาสตร์เป็นที่นิยม แต่ปัจจุบันพบปัญหาจากการสำรวจผู้ใช้บริการจริง จำนวน 50 คน ดังนี้:</p>
+                <div class="highlight-numbers-layout" style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: var(--bg-light); padding: 20px; border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                        <div class="number" style="font-size: 60px;">50%</div>
+                        <p style="font-size: 16px; margin: 0;">ไม่ทราบเวลารถคันถัดไปจะมาถึง</p>
+                    </div>
+                    <div style="background: var(--bg-light); padding: 20px; border-radius: 8px; border-left: 4px solid var(--secondary-color);">
+                        <div class="number" style="font-size: 60px; color: var(--secondary-color);">16%</div>
+                        <p style="font-size: 16px; margin: 0;">รอคิวเยอะและไม่มีระบบจัดการคิว</p>
+                    </div>
+                    <div style="background: var(--bg-light); padding: 20px; border-radius: 8px; border-left: 4px solid var(--text-light);">
+                        <div class="number" style="font-size: 60px; color: var(--text-light);">12%</div>
+                        <p style="font-size: 16px; margin: 0;">ไม่ทราบว่ามีรถตู้อยู่หน้าท่าหรือไม่</p>
+                    </div>
+                    <div style="background: var(--bg-light); padding: 20px; border-radius: 8px; border-left: 4px solid var(--text-dark);">
+                        <div class="number" style="font-size: 60px; color: var(--text-dark);">6%</div>
+                        <p style="font-size: 16px; margin: 0;">ไม่มีระบบแจ้งเตือนเวลารถใกล้มาถึง</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="image-wrapper">
+                    <!-- Placeholder for Context Image -->
+                    <div style="text-align: center; color: var(--text-light);">
+                        <i class="fa-solid fa-users-line" style="font-size: 80px; color: var(--border-color); margin-bottom: 20px;"></i>
+                        <p>บริบท: การจดคิวบนกระดาษที่หน้าท่ารถ<br>ทำให้เกิดความสับสนและสูญเสียเวลา</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Problem Statement -->
+<div class="slide-container" id="slide3">
+    <h2 class="slide-title">ปัญหาที่พบในกระบวนการปัจจุบัน (Problem Statement)</h2>
+    <div class="content-area">
+        <div class="tiled-content">
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                <h3>การจัดคิวแบบกระดาษ</h3>
+                <p>เจ้าหน้าที่ต้องจดบันทึกด้วยมือ เสี่ยงต่อการเรียกคิวผิดลำดับ และผู้โดยสารต้องยืนรอที่ท่ารถโดยไม่ทราบลำดับที่ชัดเจน</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <h3>ความล่าช้าและการเสียโอกาส</h3>
+                <p>หากผู้โดยสารไม่อยู่ในจุดรอจะถูกข้ามคิว ทำให้ผู้โดยสารเสียเวลา และคนขับจัดการที่นั่งว่าง (No-show) ได้ลำบาก</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-eye-slash"></i></div>
+                <h3>ขาดความโปร่งใสและข้อมูล</h3>
+                <p>ผู้โดยสารไม่สามารถติดตามตำแหน่งรถตู้ ไม่มีการแจ้งเตือนแบบเรียลไทม์ และผู้ให้บริการไม่มีข้อมูลสถิติเพื่อพัฒนาบริการ</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Objectives -->
+<div class="slide-container" id="slide4">
+    <h2 class="slide-title">วัตถุประสงค์ของโครงงาน (Objectives)</h2>
+    <div class="content-area">
+        <div class="bullet-list">
+            <ul>
+                <li>
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <strong>พัฒนาระบบฝั่งผู้โดยสาร (Passenger Web App)</strong>
+                    เพื่อให้ผู้โดยสารจองคิวรถตู้ล่วงหน้า ตรวจสอบลำดับคิว และติดตามตำแหน่งรถตู้ได้อย่างสะดวกด้วยตนเอง
+                </li>
+                <li>
+                    <i class="fa-solid fa-id-card"></i>
+                    <strong>พัฒนาระบบฝั่งคนขับ (Driver Dashboard)</strong>
+                    สร้างหน้าจอสำหรับคนขับในการดูรายชื่อผู้โดยสาร จัดการคิว ตรวจสอบสลิปโอนเงิน และยืนยันสถานะการออกรถ
+                </li>
+                <li>
+                    <i class="fa-solid fa-database"></i>
+                    <strong>จัดเก็บข้อมูลในฐานข้อมูลส่วนกลาง</strong>
+                    จัดเก็บข้อมูลผู้โดยสาร รถตู้ เส้นทาง และรอบการเดินรถ เพื่อรองรับการนำไปวิเคราะห์สถิติในอนาคต
+                </li>
+                <li>
+                    <i class="fa-solid fa-vial-circle-check"></i>
+                    <strong>ทดสอบประสิทธิภาพ (Usability Testing)</strong>
+                    ประเมินการใช้งานของระบบต้นแบบ ทั้งด้านการทำงานของฟังก์ชัน (Functional) และประสบการณ์ผู้ใช้ (UX)
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 5. Scope of Work -->
+<div class="slide-container" id="slide5">
+    <h2 class="slide-title">ขอบเขตของโครงงาน (Scope of Work)</h2>
+    <div class="content-area">
+        <div class="two-column tiled">
+            <div style="border-top: 6px solid var(--primary-color);">
+                <h3><i class="fa-solid fa-circle-check" style="color: var(--primary-color); margin-right: 10px;"></i>สิ่งที่ระบบรองรับ (In-Scope)</h3>
+                <ul style="text-align: left; margin-top: 20px;">
+                    <li>รองรับเส้นทางหลักจาก ม.ธรรมศาสตร์: <strong>จตุจักร, อนุสาวรีย์ชัยฯ, ฟิวเจอร์พาร์ค รังสิต</strong></li>
+                    <li>ใช้งานผ่าน Web Application บนอุปกรณ์พกพา</li>
+                    <li>ระบบการแจ้งเตือนแบบเรียลไทม์ (Push Notification)</li>
+                    <li>ระบบจำลองการเลื่อนคิวและยกเลิกตั๋วอัตโนมัติ (Cutoff time)</li>
+                    <li>ระบบจัดการสลิปการโอนเงิน (ตรวจสอบโดยคนขับ)</li>
+                </ul>
+            </div>
+            <div style="border-top: 6px solid #64748b;">
+                <h3><i class="fa-solid fa-circle-xmark" style="color: #64748b; margin-right: 10px;"></i>สิ่งที่อยู่นอกเหนือขอบเขต (Out-of-Scope)</h3>
+                <ul style="text-align: left; margin-top: 20px;">
+                    <li>ไม่รองรับเส้นทางอื่นนอกจากที่กำหนดไว้ในระบบต้นแบบ</li>
+                    <li>ยังไม่เชื่อมต่อกับระบบ Payment Gateway อัตโนมัติ (ปัจจุบันใช้การอัปโหลดสลิปเพื่อให้คนขับตรวจสอบ)</li>
+                    <li>ความแม่นยำของ GPS ขึ้นอยู่กับอุปกรณ์ของคนขับและสัญญาณอินเทอร์เน็ต</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 6. Related Work -->
+<div class="slide-container" id="slide6">
+    <h2 class="slide-title" style="margin-top: 12px;">งานที่เกี่ยวข้อง (Related Work)</h2>
+    <div class="content-area">
+        <p style="align-self: flex-start; margin-bottom: 12px; font-size: 18px;">เปรียบเทียบแอปพลิเคชันในตลาด (BusX, RodTuu, BusOnlineTicket) กับระบบของเรา</p>
+        <div class="table-layout compact-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ฟีเจอร์หลัก</th>
+                        <th style="color: var(--primary-color);">ระบบของเรา (Van Queue)</th>
+                        <th>BusX / BusOnlineTicket</th>
+                        <th>RodTuu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>บริบทการใช้งาน</strong></td>
+                        <td style="font-weight: 500; color: var(--primary-color);">รถตู้ระยะสั้น / พื้นที่จำกัด (มธ.)</td>
+                        <td>รถทัวร์ระยะไกลเชิงพาณิชย์</td>
+                        <td>แอปรวบรวมสายรถตู้ทั่วไป</td>
+                    </tr>
+                    <tr>
+                        <td><strong>การจัดคิวแบบ Real-time (FCFS)</strong></td>
+                        <td><i class="fa-solid fa-check" style="color: #10b981;"></i> มีระบบรันคิวออนไลน์และ Walk-in</td>
+                        <td><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> จองตั๋วตายตัว ไม่มีรันคิว</td>
+                        <td><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> ไม่มีระบบจอง</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ระบบจัดการที่นั่ง (Run-up Queue)</strong></td>
+                        <td><i class="fa-solid fa-check" style="color: #10b981;"></i> ตัดสิทธิ์คนไม่มา เติมที่นั่งอัตโนมัติ</td>
+                        <td><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> ไม่มี</td>
+                        <td><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> ไม่มี</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ระบบฝั่งคนขับ (Driver UI)</strong></td>
+                        <td><i class="fa-solid fa-check" style="color: #10b981;"></i> เช็กอิน, ตรวจสลิป, แจ้งรถออก</td>
+                        <td><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> เน้นลูกค้าเป็นหลัก</td>
+                        <td><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> ไม่มี</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p style="margin-top: 20px; font-style: italic; color: var(--text-light);"><i class="fa-solid fa-lightbulb" style="color: var(--secondary-color);"></i> สรุป: ระบบเดิมไม่ตอบโจทย์การจัดการคิวที่มีความหนาแน่นสูงในช่วงเวลาเร่งด่วนหน้าท่ารถ</p>
+    </div>
+</div>
+
+<!-- 7. Proposed Solution -->
+<div class="slide-container" id="slide7">
+    <h2 class="slide-title">สรุปผลทดสอบและแนวทางปรับปรุง (Proposed Solution)</h2>
+    <div class="content-area">
+        <div class="tiled-content" style="gap: 20px;">
+            <div class="tile" style="flex: 1.5; border-top: 4px solid var(--primary-color);">
+                <h3>1. ผลการทดสอบโดยรวม</h3>
+                <p>ผลทดสอบผู้ใช้ 5 คนแสดงว่าระบบผ่านเกณฑ์หลักทั้งหมด</p>
+                <ul style="padding-left: 20px; color: var(--text-light);">
+                    <li><strong>Completion Rate เฉลี่ย 95%</strong> สูงกว่าเกณฑ์ขั้นต่ำ 70%</li>
+                    <li><strong>SUS เฉลี่ย 78.5</strong> อยู่ในระดับ Good และสูงกว่าเกณฑ์ 68</li>
+                    <li><strong>Learnability 80%</strong> ผู้ใช้ใหม่ทำงานหลักได้ตั้งแต่ครั้งแรก</li>
+                    <li><strong>No Critical Error</strong> ในเส้นทางหลักของระบบ</li>
+                </ul>
+            </div>
+            <div class="tile" style="flex: 2; border-top: 4px solid var(--secondary-color);">
+                <h3>2. ปัญหาที่พบจากการใช้งาน</h3>
+                <ul style="padding-left: 20px; color: var(--text-light); margin-bottom: 0;">
+                    <li><strong>ปุ่มอัปโหลดสลิป</strong> มองเห็นยาก ผู้ใช้บางคนต้องคลิกหลายครั้ง</li>
+                    <li><strong>คำศัพท์บางส่วน</strong> เช่น Run-up Queue และประเภทคิว ยังทำให้ผู้ใช้สับสน</li>
+                    <li><strong>ขั้นตอนตรวจสลิป</strong> และแจ้งเตือนบางช่วงยังมีความหน่วง</li>
+                </ul>
+            </div>
+            <div class="tile" style="flex: 1.5; border-top: 4px solid #10b981;">
+                <h3>3. แนวทางปรับปรุง</h3>
+                <p>เน้นทำให้ระบบเข้าใจง่ายขึ้น ใช้งานเร็วขึ้น และลดความหน่วงของงานหลัก</p>
+                <ul style="padding-left: 20px; color: var(--text-light);">
+                    <li>ปรับ UI ปุ่มและข้อความให้ชัดเจนขึ้น</li>
+                    <li>เพิ่ม Tooltip / คำอธิบายประเภทคิวและสถานะระหว่างรอ</li>
+                    <li>ลดงาน manual และปรับระบบหลังบ้านให้เสถียรขึ้น</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 8. System Architecture -->
+<div class="slide-container" id="slide8">
+    <h2 class="slide-title">สถาปัตยกรรมระบบ (System Architecture)</h2>
+    <div class="content-area">
+        <div style="text-align: center; width: 100%;">
+            <div class="tech-stack" style="margin-bottom: 40px;">
+                <div class="tech-badge"><i class="fa-brands fa-react" style="color: #61dafb; font-size: 24px;"></i> React.js (Frontend)</div>
+                <div class="tech-badge"><i class="fa-brands fa-node-js" style="color: #68a063; font-size: 24px;"></i> Node.js + Express (Backend)</div>
+                <div class="tech-badge"><i class="fa-solid fa-leaf" style="color: #4db33d; font-size: 24px;"></i> MongoDB (Database)</div>
+                <div class="tech-badge"><i class="fa-solid fa-bolt" style="color: #000; font-size: 24px;"></i> Socket.IO (Real-time)</div>
+                <div class="tech-badge"><i class="fa-solid fa-bell" style="color: #ffca28; font-size: 24px;"></i> Firebase Cloud Messaging</div>
+                <div class="tech-badge"><i class="fa-solid fa-map-location-dot" style="color: #ea4335; font-size: 24px;"></i> Google Maps API</div>
+            </div>
+            
+            <div style="display: flex; justify-content: center; align-items: center; gap: 30px; background: var(--bg-light); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <div style="text-align: center;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <i class="fa-solid fa-mobile-screen" style="font-size: 40px; color: var(--primary-color);"></i><br><strong>Client Layer</strong><br>Passenger / Driver App
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right-arrow-left" style="font-size: 30px; color: #cbd5e1;"></i>
+                <div style="text-align: center;">
+                    <div style="background: white; padding: 15px 30px; border-radius: 8px; border: 2px solid var(--primary-color);">
+                        <i class="fa-solid fa-server" style="font-size: 40px; color: var(--primary-color);"></i><br><strong>Application Layer</strong><br>RESTful API (Express) + JWT
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right-arrow-left" style="font-size: 30px; color: #cbd5e1;"></i>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: white; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <i class="fa-solid fa-database" style="color: #4db33d;"></i> <strong>Data Layer:</strong> MongoDB
+                    </div>
+                    <div style="background: white; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <i class="fa-solid fa-cloud" style="color: #ffca28;"></i> <strong>External:</strong> FCM / Maps
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 9. Methodology / Design -->
+<div class="slide-container" id="slide9">
+    <h2 class="slide-title">ขั้นตอนการทำงานหลัก (Workflow Design)</h2>
+    <div class="content-area">
+        <div class="timeline-layout hide-line">
+            <div class="timeline-line"></div>
+            
+            <div class="timeline-item">
+                <div class="icon-circle"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <h3>1. Check & Book</h3>
+                <p style="font-size: 16px;">ผู้โดยสารเช็กคิวว่าง เลือกรอบรถ และเลือกประเภทจอง (ชำระทันที/จ่ายหน้าท่า)</p>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="icon-circle"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <h3>2. Verify Slip</h3>
+                <p style="font-size: 16px;">ผู้โดยสารอัปโหลดสลิปเข้าสู่ระบบ คนขับตรวจสอบความถูกต้องผ่านหน้า Dashboard</p>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="icon-circle"><i class="fa-solid fa-hourglass-end"></i></div>
+                <h3>3. Cutoff & Run-up</h3>
+                <p style="font-size: 16px;">ระบบตัดสิทธิ์คนไม่จ่ายเงินตามเวลา (15 นาทีก่อนออก) และเติมที่นั่งให้ Walk-in อัตโนมัติ</p>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="icon-circle"><i class="fa-solid fa-van-shuttle"></i></div>
+                <h3>4. Depart & Notify</h3>
+                <p style="font-size: 16px;">คนขับกด "รถใกล้ออก" ระบบส่ง Push Notification แจ้งเตือน และกดยืนยันเมื่อถึงปลายทาง</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 10. Implementation -->
+<div class="slide-container" id="slide10">
+    <h2 class="slide-title">การออกแบบหน้าจอ (UI Implementation)</h2>
+    <div class="content-area">
+        <p style="align-self: flex-start; margin-bottom: 20px;">ตัวอย่างหน้าจอฝั่งผู้โดยสาร (Passenger Mobile Web App)</p>
+        <div class="screenshot-grid">
+            <div class="screenshot-item">
+                <div class="image-wrapper" style="height: 300px; background: white;">
+                    <div style="border: 2px solid #e2e8f0; border-radius: 20px; width: 140px; height: 280px; padding: 10px; position: relative;">
+                        <div style="background: var(--secondary-color); height: 60px; border-radius: 10px; margin-bottom: 10px;"></div>
+                        <div style="background: #e2e8f0; height: 20px; border-radius: 4px; margin-bottom: 10px; width: 80%;"></div>
+                        <div style="background: #f1f5f9; height: 80px; border-radius: 8px; margin-bottom: 10px;"></div>
+                        <div style="background: var(--primary-color); height: 30px; border-radius: 15px; width: 100%; position: absolute; bottom: 20px; left: 0; width: calc(100% - 20px); margin: 0 10px;"></div>
+                    </div>
+                </div>
+                <h3 style="font-size: 20px; margin-top: 15px;">หน้าหลัก & จองคิว</h3>
+                <p style="font-size: 16px;">แสดงเวลารถถึง และจำนวนที่นั่งว่างแบบเรียลไทม์</p>
+            </div>
+            <div class="screenshot-item">
+                <div class="image-wrapper" style="height: 300px; background: white;">
+                    <div style="border: 2px solid #e2e8f0; border-radius: 20px; width: 140px; height: 280px; padding: 10px; position: relative;">
+                         <div style="background: #f1f5f9; height: 100px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center;"><i class="fa-solid fa-qrcode" style="font-size: 40px; color: var(--text-light);"></i></div>
+                         <div style="background: #e2e8f0; height: 40px; border-radius: 4px; margin-bottom: 10px;"></div>
+                         <div style="background: var(--secondary-color); height: 30px; border-radius: 15px; width: 100%; margin-top: 20px;"></div>
+                    </div>
+                </div>
+                <h3 style="font-size: 20px; margin-top: 15px;">หน้าชำระเงิน</h3>
+                <p style="font-size: 16px;">สแกน QR Code และแนบสลิปเพื่อยืนยันที่นั่ง</p>
+            </div>
+            <div class="screenshot-item">
+                <div class="image-wrapper" style="height: 300px; background: white;">
+                    <div style="border: 2px solid #e2e8f0; border-radius: 20px; width: 140px; height: 280px; padding: 10px; position: relative;">
+                         <div style="background: var(--primary-color); height: 80px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">Ticket A001</div>
+                         <div style="background: #fee2e2; border: 1px solid #ef4444; height: 40px; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; color: #ef4444; font-size: 10px;">Countdown 14:59</div>
+                         <div style="background: #e2e8f0; height: 60px; border-radius: 8px;"></div>
+                    </div>
+                </div>
+                <h3 style="font-size: 20px; margin-top: 15px;">สถานะการเดินทาง</h3>
+                <p style="font-size: 16px;">แสดงเลขตั๋ว พร้อมเวลานับถอยหลัง (Countdown) กันพลาดคิว</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 11. Demo / Screenshots (Driver) -->
+<div class="slide-container" id="slide11">
+    <h2 class="slide-title">หน้าจอฝั่งคนขับรถตู้ (Driver Dashboard)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <p>ระบบถูกออกแบบให้คนขับสามารถจัดการคิวหน้างานได้อย่างรวดเร็ว:</p>
+                <ul style="margin-top: 20px;">
+                    <li><strong>เลือกรอบรถ:</strong> เลือกรอบเวลาที่ตนรับผิดชอบในแต่ละวัน</li>
+                    <li><strong>ตรวจสอบสลิป (Verify Slip):</strong> ดูภาพสลิปและกดยืนยัน (Approve/Reject)</li>
+                    <li><strong>Dashboard สถานะ:</strong> ดู Live Seat (Online/Walk-in) และเช็กอินผู้โดยสาร</li>
+                    <li><strong>ปุ่มควบคุม:</strong> กด "รับ Walk-in เพิ่ม", "รถใกล้ออก" (ส่งแจ้งเตือน), และ "รถออกแล้ว" (อัปเดต GPS)</li>
+                </ul>
+            </div>
+            <div>
+                <div class="image-wrapper" style="background: var(--text-dark); padding: 20px; flex-direction: column; gap: 10px;">
+                    <!-- Driver UI Mockup -->
+                    <div style="background: white; width: 80%; border-radius: 8px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 10px;">
+                            <span style="font-weight: bold; color: var(--primary-color);">รอบ 07:30 - หมอชิต</span>
+                            <span style="color: #ef4444;">15 Mins Left</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <div style="flex: 1; background: #dcfce7; color: #166534; text-align: center; padding: 5px; border-radius: 4px; font-size: 14px;">Online: 5/7</div>
+                            <div style="flex: 1; background: #fef08a; color: #854d0e; text-align: center; padding: 5px; border-radius: 4px; font-size: 14px;">Walk-in: 3/7</div>
+                        </div>
+                        <button style="width: 100%; background: var(--secondary-color); border: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 10px;">ตรวจสลิป 2 รายการ</button>
+                        <button style="width: 100%; background: var(--primary-color); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold;">แจ้งเตือนรถใกล้ออก</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="demo-links" style="margin-top: 26px;">
+            <a class="demo-button" href="https://booking-frontend.kindmoss-96ac25cc.southeastasia.azurecontainerapps.io" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-user"></i>
+                ทดลองใช้หน้าผู้โดยสาร
+            </a>
+            <a class="demo-button secondary" href="https://driver-frontend.kindmoss-96ac25cc.southeastasia.azurecontainerapps.io" target="_blank" rel="noopener noreferrer">
+                <i class="fa-solid fa-van-shuttle"></i>
+                ทดลองใช้หน้าคนขับ
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 12. Azure Deployment (Part 1) -->
+<div class="slide-container" id="slide12-azure-1">
+    <h2 class="slide-title">การนำระบบขึ้นใช้งานบน Microsoft Azure Container Apps</h2>
+    <div class="content-area">
+        <div class="deployment-banner">
+            <div>
+                <strong>Production Deployment</strong>
+                <span>หลังทดสอบบน Local Environment แล้ว ผู้จัดทำได้นำระบบขึ้นใช้งานจริงบน Azure เพื่อให้เข้าถึงผ่านอินเทอร์เน็ตได้</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; color: var(--primary-color); font-weight: 600;">
+                <i class="fa-solid fa-cloud" style="font-size: 22px;"></i>
+                Azure Cloud
+            </div>
+        </div>
+
+        <div class="deployment-grid">
+            <div class="deployment-panel">
+                <h3>Pipeline การ Deploy</h3>
+                <div class="deployment-flow">
+                    <div class="deployment-step">
+                        <div class="step-index">1</div>
+                        <div class="step-body">
+                            <strong>Build Docker Image</strong>
+                            <span>สร้าง Image แยกตาม Service ได้แก่ Booking Frontend, Booking Backend, Driver Frontend และ Driver Backend</span>
+                        </div>
+                    </div>
+                    <div class="deployment-step">
+                        <div class="step-index">2</div>
+                        <div class="step-body">
+                            <strong>Push ไปยัง Azure Container Registry (ACR)</strong>
+                            <span>จัดเก็บ Image แบบส่วนกลาง เพื่อให้ Azure Container Apps ดึงไปใช้งานได้อย่างเป็นระเบียบ</span>
+                        </div>
+                    </div>
+                    <div class="deployment-step">
+                        <div class="step-index">3</div>
+                        <div class="step-body">
+                            <strong>Create Azure Container Apps</strong>
+                            <span>กำหนด CPU, Memory, Ingress และ Environment Variables สำหรับแต่ละ Service แยกจากกัน</span>
+                        </div>
+                    </div>
+                    <div class="deployment-step">
+                        <div class="step-index">4</div>
+                        <div class="step-body">
+                            <strong>เชื่อมต่อผ่าน REST API / Socket.IO</strong>
+                            <span>Frontend และ Backend สื่อสารผ่าน URL ของ Azure Container Apps ที่ Deploy จริงแล้ว</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="deployment-panel">
+                <h3>บริการที่ Deploy แยกกัน</h3>
+                <div class="service-matrix">
+                    <div class="service-card">
+                        <div class="service-tag"><i class="fa-solid fa-user"></i> Passenger</div>
+                        <h4>booking-frontend</h4>
+                        <p>หน้าจอผู้โดยสารบนเว็บ ใช้จองคิวและติดตามสถานะการเดินทาง</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-tag"><i class="fa-solid fa-server"></i> API</div>
+                        <h4>booking-backend</h4>
+                        <p>ดูแลการจองคิว การชำระเงิน และการแจ้งเตือน</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-tag"><i class="fa-solid fa-van-shuttle"></i> Driver</div>
+                        <h4>driver-frontend</h4>
+                        <p>หน้าจอสำหรับคนขับ ใช้จัดการคิว ตรวจสลิป และดูสถานะรถ</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-tag"><i class="fa-solid fa-gears"></i> Control</div>
+                        <h4>driver-backend</h4>
+                        <p>จัดการรอบรถ ตรวจสอบข้อมูล และอัปเดตสถานะในระบบหลังบ้าน</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 13. Azure Deployment (Part 2) -->
+<div class="slide-container" id="slide13-azure-2">
+    <h2 class="slide-title">ประเด็นสำคัญของการ Deploy บน Azure</h2>
+    <div class="content-area">
+        <div style="width: 100%; margin-bottom: 18px; padding: 16px; background: white; border: 1px dashed var(--border-color); border-radius: 14px;">
+            <p style="margin: 0; font-weight: 600; color: var(--text-dark);">จุดสำคัญที่กรรมการควรทราบ</p>
+            <p style="margin: 6px 0 0 0; font-size: 18px;">ระบบถูกแยกเป็น Container หลายตัว ทำให้ Scale ได้อิสระ ดูแลง่าย และอัปเดตเวอร์ชันได้โดยไม่กระทบบริการอื่น</p>
+        </div>
+
+        <div class="deployment-footer" style="width: 100%; margin-top: 0;">
+            <div class="mini-stat">
+                <strong>Auto Scale</strong>
+                <span>รองรับการปรับขนาดอัตโนมัติตามโหลดของผู้ใช้</span>
+            </div>
+            <div class="mini-stat">
+                <strong>Public Access</strong>
+                <span>เปิดใช้งานผ่าน Ingress เพื่อเข้าถึงได้จากอินเทอร์เน็ต</span>
+            </div>
+            <div class="mini-stat">
+                <strong>Secure Config</strong>
+                <span>เก็บค่า Database URL, JWT Secret และ API Endpoint ผ่าน Environment Variables</span>
+            </div>
+            <div class="mini-stat">
+                <strong>Production-like</strong>
+                <span>สภาพแวดล้อมใกล้เคียง Production และลดปัญหาแตกต่างระหว่าง Local กับ Cloud</span>
+            </div>
+        </div>
+
+        <div class="deployment-panel" style="width: 100%; margin-top: 18px;">
+            <h3>สรุปการเชื่อมต่อระหว่างระบบ</h3>
+            <div class="deployment-flow" style="grid-template-columns: 1fr 1fr; display: grid;">
+                <div class="deployment-step">
+                    <div class="step-index">1</div>
+                    <div class="step-body">
+                        <strong>Passenger Flow</strong>
+                        <span>Booking Frontend ติดต่อ Booking Backend ผ่าน REST API และแจ้งเตือนแบบ Real-time ด้วย Socket.IO</span>
+                    </div>
+                </div>
+                <div class="deployment-step">
+                    <div class="step-index">2</div>
+                    <div class="step-body">
+                        <strong>Driver Flow</strong>
+                        <span>Driver Frontend ติดต่อ Driver Backend เพื่อจัดการรอบรถ ตรวจสอบสลิป และอัปเดตสถานะรถ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 14. Testing & Evaluation -->
+<div class="slide-container" id="slide12">
+    <h2 class="slide-title">การทดสอบและประเมินผล (Usability Testing)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>สรุปผลการประเมิน</h3>
+                <p>ทดสอบกับผู้ใช้ตัวแทน 5 คน พบว่าระบบผ่านเกณฑ์หลักและใช้งานได้จริงในภาพรวม</p>
+                <ul style="margin-bottom: 20px;">
+                    <li><strong>Completion Rate เฉลี่ย 95%</strong> สูงกว่าเกณฑ์ 70%</li>
+                    <li><strong>SUS เฉลี่ย 78.5</strong> อยู่ในระดับ Good</li>
+                    <li><strong>Learnability 80%</strong> ผู้ใช้ใหม่ทำได้ตั้งแต่ครั้งแรก</li>
+                    <li><strong>No Critical Error</strong> ในเส้นทางหลัก</li>
+                </ul>
+                
+                <div style="background: var(--bg-light); border-left: 4px solid var(--primary-color); padding: 15px; border-radius: 8px;">
+                    <p style="margin: 0; font-weight: bold; color: var(--text-dark);">ภาพรวมที่ได้จากการทดสอบ</p>
+                    <p style="margin: 0; font-size: 16px;">ระบบทำงานได้ดี แต่ยังมีจุดที่ควรปรับ UI, คำศัพท์ และความหน่วงของขั้นตอนอัปโหลด/ตรวจสลิป</p>
+                </div>
+            </div>
+            
+            <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
+                <h3 style="font-size: 20px; text-align: center;">ผลเด่นจากการทดสอบ</h3>
+                <div class="bar-chart">
+                    <div class="bar-row">
+                        <div class="bar-label">จองคิวแบบ Paid<br><span style="font-size: 14px; font-weight: normal;">Median Time: 58 วินาที</span></div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: 84%;">80% สำเร็จ</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">จองคิวแบบ Unpaid<br><span style="font-size: 14px; font-weight: normal;">Median Time: 42 วินาที</span></div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: 84%;">100% สำเร็จ</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">ตรวจสอบคิวคงเหลือ<br><span style="font-size: 14px; font-weight: normal;">Median Time: 27 วินาที</span></div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: 92%;">100% สำเร็จ</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">ตรวจสอบสลิปฝั่ง Driver<br><span style="font-size: 14px; font-weight: normal;">Median Time: 49 วินาที</span></div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: 80%;">80% สำเร็จ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 15. Results & Discussion -->
+<div class="slide-container" id="slide13">
+    <h2 class="slide-title">สรุปปัญหาที่พบจากผู้ใช้ (Results & Discussion)</h2>
+    <div class="content-area">
+        <div class="tiled-content">
+            <div class="tile">
+                <div class="icon" style="font-size: 36px;"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <h3 style="font-size: 22px;">ปรับปุ่ม UI </h3>
+                <p style="font-size: 16px;"><strong>ปัญหา:</strong> ผู้ใช้หลายคนในการใช้งานครั้งแรกยังสับสน ว่าต้องกดที่ตรงไหน อาจจะมีบางหน้าที่ยังไม่ชัดเจน<br><strong>แนวทางแก้ไข:</strong> ปรับปรุง UI เพิ่มคอนทราสต์ของปุ่ม และจัดวางให้อยู่ในจุดที่มองเห็นได้ชัดเจนทันที</p>
+            </div>
+            <div class="tile">
+                <div class="icon" style="font-size: 36px;"><i class="fa-solid fa-language"></i></div>
+                <h3 style="font-size: 22px;">ความสับสนเรื่องคำศัพท์</h3>
+                <p style="font-size: 16px;"><strong>ปัญหา:</strong> ผู้ใช้ไม่เข้าใจคำว่า "Run-up Queue" และประเภทคิว (Paid/Unpaid)<br><strong>แนวทางแก้ไข:</strong> เพิ่มสาธิตวิธีการใช้งานระบบในตอนเริ่มต้นและปรับใช้ภาษาไทยที่เข้าใจง่ายขึ้น</p>
+            </div>
+            <div class="tile">
+                <div class="icon" style="font-size: 36px;"><i class="fa-solid fa-stopwatch"></i></div>
+                <h3 style="font-size: 22px;"> ระบบมีความหนน่วง</h3>
+                <p style="font-size: 16px;"><strong>ปัญหา: บางครั้งเมื่อมีการอัปเดตคิว ระบบยังไม่แสดงผลทันที</strong> <br><strong>แนวทางแก้ไข:</strong> ใช้ socket.io ในการสื่อสารแบบเรียลไทม์ ทำให้อัปเดตคิวหรือข้อมูลอื่นๆได้ทันที</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 16. Conclusion -->
+<div class="slide-container" id="slide14">
+    <h2 class="slide-title">สรุปผลการดำเนินงาน (Conclusion)</h2>
+    <div class="content-area">
+        <div style="background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 12px; padding: 40px; text-align: center; max-width: 900px;">
+            <i class="fa-solid fa-award" style="font-size: 60px; color: var(--secondary-color); margin-bottom: 20px;"></i>
+            <h3 style="font-size: 28px; margin-bottom: 20px;">ระบบเปลี่ยนกระดาษสู่ดิจิทัลได้สำเร็จ</h3>
+            <p style="font-size: 22px;">โครงงานนี้บรรลุเป้าหมายในการพัฒนาระบบต้นแบบที่ช่วยเปลี่ยนการเข้าคิวกระดาษหน้าท่ารถ ให้กลายเป็น<strong>ระบบออนไลน์ที่โปร่งใส</strong></p>
+            <p style="font-size: 22px;">ระบบ <strong>Time-based Cutoff</strong> และ <strong>60/40 Quota</strong> ช่วยรักษาความเป็นธรรมระหว่างผู้โดยสารจองล่วงหน้าและ Walk-in พร้อมลดภาระงานของคนขับได้อย่างเป็นรูปธรรม</p>
+        </div>
+    </div>
+</div>
+
+<!-- 17. Limitations -->
+<div class="slide-container" id="slide15">
+    <h2 class="slide-title">ข้อจำกัดของระบบ (Limitations)</h2>
+    <div class="content-area">
+        <div class="bullet-list">
+            <ul>
+                <li>
+                    <i class="fa-solid fa-wifi"></i>
+                    <strong>ความเสถียรของอินเทอร์เน็ต</strong>
+                    หากสัญญาณไม่ดีหรือ Server ล่ม ระบบจะหยุดชะงัก (Downtime Risk) จำเป็นต้องมีแผนสำรองแบบ Manual เพื่อใช้หน้าท่ารถ
+                </li>
+                <li>
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                    <strong>การตรวจสลิปเป็นแบบ Manual</strong>
+                    เวอร์ชันต้นแบบยังใช้คนขับตรวจสอบสลิปด้วยสายตา ซึ่งอาจล่าช้าและเกิด Human Error ในช่วงที่มีผู้โดยสารจำนวนมาก
+                </li>
+                <li>
+                    <i class="fa-solid fa-code-branch"></i>
+                    <strong>ความซับซ้อนของนโยบาย Cutoff</strong>
+                    การแบ่งประเภท Walk-in, Paid, Unpaid ทำให้กฎการตัดสิทธิ์มีความซับซ้อน ต้องอาศัยการสื่อสารให้ผู้ใช้เข้าใจอย่างชัดเจน
+                </li>
+                <li>
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <strong>ข้อจำกัดของระบบ GPS</strong>
+                    ระบบติดตามตำแหน่งยังพิงพิกัดจากอุปกรณ์ของคนขับเพียงอย่างเดียว อาจไม่แม่นยำหากถูกปิดแอปหรือสัญญาณ GPS ขาดหาย
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 18. Future Work -->
+<div class="slide-container" id="slide16">
+    <h2 class="slide-title">แนวทางการพัฒนาต่อยอด (Future Work)</h2>
+    <div class="content-area">
+        <div class="tiled-content">
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-credit-card"></i></div>
+                <h3>Payment Gateway / AI Slip Verification</h3>
+                <p>เชื่อมต่อระบบรับชำระเงินอัตโนมัติ (PromptPay API) หรือใช้เทคโนโลยี OCR ในการตรวจจับสลิปโอนเงินเพื่อลดภาระของคนขับ</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-map-location-dot"></i></div>
+                <h3>Real-time Fleet Tracking Map</h3>
+                <p>พัฒนาแผนที่แสดงตำแหน่งรถตู้แบบ Real-time โดยดึงข้อมูลจากอุปกรณ์ GPS ที่ติดตั้งในรถโดยตรง เพื่อความแม่นยำสูงสุด</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-chart-pie"></i></div>
+                <h3>Data Analytics Dashboard</h3>
+                <p>พัฒนาระบบวิเคราะห์สถิติผู้โดยสารในแต่ละช่วงเวลา สำหรับผู้บริหาร เพื่อนำไปปรับปรุงรอบเดินรถและคาดการณ์ปริมาณความต้องการ</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 19. Q&A -->
+<div class="slide-container" id="slide17">
+    <div class="qa-layout">
+        <h2>Q & A</h2>
+        <p>ขอบพระคุณคณะกรรมการและผู้เข้าร่วมรับฟังทุกท่าน</p>
+        <p style="font-size: 24px; margin-top: 40px; color: var(--text-light);">โครงงานพิเศษ: ระบบจัดการคิวรถตู้และติดตามสถานะรถแบบออนไลน์</p>
+        <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
+            <span style="font-weight: bold; color: var(--primary-color);">มหาวิทยาลัยธรรมศาสตร์</span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
