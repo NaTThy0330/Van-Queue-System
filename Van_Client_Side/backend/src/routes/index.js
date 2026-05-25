@@ -7,6 +7,7 @@ const express_1 = require("express");
 const authRoutes_1 = __importDefault(require("./authRoutes"));
 const protectedRoutes_1 = __importDefault(require("./protectedRoutes"));
 const notificationsController_1 = require("../controllers/notificationsController");
+const internalTripsController_1 = require("../controllers/internalTripsController");
 const asyncHandler_1 = require("../utils/asyncHandler");
 const router = (0, express_1.Router)();
 router.get("/", (_req, res) => {
@@ -14,6 +15,7 @@ router.get("/", (_req, res) => {
 });
 router.use("/auth", authRoutes_1.default);
 router.post("/internal/notifications/departure", (0, asyncHandler_1.asyncHandler)(notificationsController_1.broadcastDepartureAlert));
+router.post("/internal/trips/sync", (0, asyncHandler_1.asyncHandler)(internalTripsController_1.syncTripFromDriver));
 router.use("/", protectedRoutes_1.default);
 exports.default = router;
 //# sourceMappingURL=index.js.map

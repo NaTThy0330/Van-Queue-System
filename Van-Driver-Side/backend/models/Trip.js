@@ -10,6 +10,7 @@ const tripSchema = new mongoose.Schema({
     departureTime: { type: Date, required: true },
     arrivalTime: { type: Date, default: null },
     actualDepartureTime: { type: Date, default: null },
+    isSpecialRound: { type: Boolean, default: false },
     status: {
         type: String,
         enum: ['scheduled', 'departed', 'completed', 'cancelled'],
@@ -49,6 +50,7 @@ tripSchema.virtual('driver_id').get(function () { return this.driverId; });
 tripSchema.virtual('departure_time').get(function () { return this.departureTime; });
 tripSchema.virtual('arrival_time').get(function () { return this.arrivalTime; });
 tripSchema.virtual('actual_departure_time').get(function () { return this.actualDepartureTime; });
+tripSchema.virtual('is_special_round').get(function () { return this.isSpecialRound; });
 tripSchema.virtual('total_seats').get(function () { return this.seatCapacity; });
 tripSchema.virtual('available_seats').get(function () { return this.availableSeats; });
 tripSchema.virtual('online_quota').get(function () { return this.onlineQuota; });

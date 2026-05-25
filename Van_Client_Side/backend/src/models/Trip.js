@@ -9,6 +9,7 @@ const tripSchema = new mongoose_1.Schema({
     departureTime: { type: Date, required: true },
     arrivalTime: { type: Date },
     actualDepartureTime: { type: Date },
+    isSpecialRound: { type: Boolean, default: false },
     status: {
         type: String,
         enum: ["scheduled", "departed", "completed", "cancelled"],

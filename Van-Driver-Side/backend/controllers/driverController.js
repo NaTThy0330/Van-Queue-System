@@ -25,6 +25,133 @@ const {
 const JWT_SECRET = process.env.JWT_SECRET || 'van-queue-secret-key-2026';
 
 const getTodayStr = () => getBangkokTodayString();
+const getPassengerApiUrl = () => process.env.PASSENGER_API_URL || '';
+const getBridgeSecret = () => process.env.DEPARTURE_NOTIFY_SECRET || '';
+
+const resolveSlipUrl = (slipUrl, passengerBaseUrl) => {
+    if (!slipUrl) {
+        return null;
+    }
+
+    const rawUrl = String(slipUrl).trim();
+    if (!rawUrl) {
+        return null;
+    }
+
+    if (/^https?:\/\//i.test(rawUrl)) {
+        return rawUrl;
+    }
+
+    if (rawUrl.startsWith('/')) {
+        return passengerBaseUrl ? `${passengerBaseUrl}${rawUrl}` : rawUrl;
+    }
+
+    return passengerBaseUrl ? `${passengerBaseUrl}/${rawUrl}` : rawUrl;
+};
+
+const toObjectIdString = (value) => {
+    if (!value) {
+        return null;
+    }
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (typeof value === 'object' && value._id) {
+        return value._id.toString();
+    }
+    if (typeof value.toString === 'function') {
+        return value.toString();
+    }
+    return null;
+};
+
+const serializeTripSnapshot = (tripDoc) => {
+    if (!tripDoc) {
+        return null;
+    }
+
+    const trip = typeof tripDoc.toObject === 'function'
+        ? tripDoc.toObject({ virtuals: false })
+        : tripDoc;
+
+    const route = trip.route && typeof trip.route === 'object'
+        ? trip.route
+        : null;
+
+    return {
+        trip_id: trip._id?.toString(),
+        driver_id: toObjectIdString(trip.driverId),
+        van_id: trip.vanId || null,
+        van_ref: toObjectIdString(trip.vanRef),
+        route_id: route?._id?.toString() || toObjectIdString(trip.route),
+        route: route ? {
+            _id: route._id?.toString(),
+            routeCode: route.routeCode || null,
+            routeName: route.routeName || null,
+            origin: route.origin || null,
+            destination: route.destination || null,
+            distance: route.distance ?? 0,
+            durationMinutes: route.durationMinutes ?? 60,
+            destinationLat: route.destinationLat ?? 0,
+            destinationLng: route.destinationLng ?? 0,
+        } : null,
+        departure_time: trip.departureTime || null,
+        arrival_time: trip.arrivalTime || null,
+        actual_departure_time: trip.actualDepartureTime || null,
+        is_special_round: !!trip.isSpecialRound,
+        status: trip.status,
+        seat_capacity: trip.seatCapacity,
+        online_quota: trip.onlineQuota,
+        walkin_quota: trip.walkinQuota,
+        available_seats: trip.availableSeats,
+        online_held_seats: trip.onlineHeldSeats,
+        online_booked_seats: trip.onlineBookedSeats,
+        cutoff_time: trip.cutoffTime || null,
+        completed_at: trip.completedAt || null,
+    };
+};
+
+const syncTripToPassengerBackend = async (tripDoc) => {
+    const passengerApiUrl = getPassengerApiUrl();
+    if (!passengerApiUrl || !tripDoc) {
+        return;
+    }
+
+    const snapshot = serializeTripSnapshot(tripDoc);
+    if (!snapshot?.trip_id || !snapshot?.departure_time || !snapshot?.route_id) {
+        return;
+    }
+
+    try {
+        await axios.post(
+            `${passengerApiUrl}/internal/trips/sync`,
+            snapshot,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-departure-secret': getBridgeSecret()
+                },
+                timeout: 5000
+            }
+        );
+    } catch (error) {
+        console.warn('[Trip Sync] Could not sync to passenger backend:', error.message);
+    }
+};
+
+const syncTripById = async (tripId) => {
+    if (!tripId) {
+        return;
+    }
+
+    const trip = await Trip.findById(tripId)
+        .populate('route')
+        .populate('vanRef');
+
+    if (trip) {
+        await syncTripToPassengerBackend(trip);
+    }
+};
 
 /**
  * Generate a unique ticket code
@@ -180,7 +307,8 @@ exports.getProfile = async (req, res) => {
                 route: activeTrip.route,
                 van: activeTrip.vanRef,
                 departure_time: activeTrip.departureTime,
-                status: activeTrip.status
+                status: activeTrip.status,
+                is_special_round: !!activeTrip.isSpecialRound
             } : null
         });
 
@@ -291,7 +419,17 @@ exports.getAvailableTrips = async (req, res) => {
         const { end: bkkTodayEnd } = getBangkokDayRange();
 
         if (now < bookingOpen) {
-            return res.json({ success: true, trips: [] });
+            const specialTrips = await Trip.find({
+                status: 'scheduled',
+                driverId: null,
+                isSpecialRound: true,
+                departureTime: { $lt: bkkTodayEnd }
+            })
+                .populate('route')
+                .populate('vanRef')
+                .sort({ departureTime: 1 });
+
+            return res.json({ success: true, trips: specialTrips });
         }
 
         const trips = await Trip.find({
@@ -306,7 +444,24 @@ exports.getAvailableTrips = async (req, res) => {
             .populate('vanRef')
             .sort({ departureTime: 1 });
 
-        res.json({ success: true, trips });
+        const specialTrips = await Trip.find({
+            status: 'scheduled',
+            driverId: null,
+            isSpecialRound: true,
+            departureTime: { $lt: bkkTodayEnd }
+        })
+            .populate('route')
+            .populate('vanRef')
+            .sort({ departureTime: 1 });
+
+        const tripMap = new Map();
+        [...trips, ...specialTrips].forEach((trip) => {
+            tripMap.set(String(trip._id), trip);
+        });
+
+        const bookableTrips = Array.from(tripMap.values()).sort((a, b) => new Date(a.departureTime) - new Date(b.departureTime));
+
+        res.json({ success: true, trips: bookableTrips });
     } catch (error) {
         console.error('[Trips Error]', error);
         res.status(500).json({ success: false, error: 'ดึงข้อมูลรอบรถล้มเหลว' });
@@ -374,6 +529,8 @@ exports.createTrip = async (req, res) => {
         const populatedTrip = await Trip.findById(trip._id)
             .populate('route')
             .populate('vanRef');
+
+        await syncTripToPassengerBackend(populatedTrip);
 
         const io = req.app.get('io');
         if (io) {
@@ -453,6 +610,8 @@ exports.assignTrip = async (req, res) => {
             .populate('route')
             .populate('vanRef');
 
+        await syncTripToPassengerBackend(populatedTrip);
+
         const io = req.app.get('io');
         if (io) {
             io.emit('trip:assigned', {
@@ -524,7 +683,7 @@ exports.getPendingPayments = async (req, res) => {
                     source: 'payment',
                     passenger_name: p.queue?.passengerName || 'ไม่ระบุชื่อ',
                     amount: p.amount || 0,
-                    slip_url: p.slipUrl ? `${passengerBaseUrl}${p.slipUrl}` : null,
+                    slip_url: resolveSlipUrl(p.slipUrl, passengerBaseUrl),
                     queue_type: p.queue?.queueType,
                     payment_status: p.status,
                     ticket_code: p.queue?.ticketCode || p.queue?._id?.toString().slice(-4).toUpperCase(),
@@ -589,7 +748,12 @@ exports.verifyPayment = async (req, res) => {
                     queue.status = 'cancelled';
                     queue.cancelReason = reason || 'สลิปถูกปฏิเสธ';
                     await queue.save();
-                    await Trip.findByIdAndUpdate(queue.trip, { $inc: { availableSeats: queue.seatCount || 1 } });
+                    const updatedTrip = await Trip.findByIdAndUpdate(
+                        queue.trip,
+                        { $inc: { availableSeats: queue.seatCount || 1 } },
+                        { new: true }
+                    );
+                    await syncTripById(updatedTrip?._id || queue.trip);
                 }
 
                 return res.json({ success: true, status: 'rejected', source: 'payment' });
@@ -609,7 +773,8 @@ exports.verifyPayment = async (req, res) => {
                 queue.status = 'cancelled';
                 await queue.save();
                 // Restore seat
-                await Trip.findByIdAndUpdate(queue.trip, { $inc: { availableSeats: 1 } });
+                const updatedTrip = await Trip.findByIdAndUpdate(queue.trip, { $inc: { availableSeats: 1 } }, { new: true });
+                await syncTripById(updatedTrip?._id || queue.trip);
                 return res.json({ success: true, status: 'rejected', source: 'queue' });
             }
         }
@@ -628,7 +793,8 @@ exports.verifyPayment = async (req, res) => {
                 booking.paymentStatus = 'rejected';
                 await booking.save();
                 // Restore seat
-                await Trip.findByIdAndUpdate(booking.tripId, { $inc: { availableSeats: 1 } });
+                const updatedTrip = await Trip.findByIdAndUpdate(booking.tripId, { $inc: { availableSeats: 1 } }, { new: true });
+                await syncTripById(updatedTrip?._id || booking.tripId);
                 return res.json({ success: true, status: 'rejected', source: 'booking' });
             }
         }
@@ -661,6 +827,10 @@ exports.getCurrentTrip = async (req, res) => {
         const trip = trips.length > 0 ? trips[0] : null;
 
         if (!trip) {
+            return res.status(200).json({ success: true, trip: null });
+        }
+
+        if (!trip.isSpecialRound && trip.departureTime < new Date()) {
             return res.status(200).json({ success: true, trip: null });
         }
 
@@ -827,6 +997,8 @@ exports.quickWalkin = async (req, res) => {
             });
         }
 
+        await syncTripById(trip._id);
+
 
         res.json({
             success: true,
@@ -893,6 +1065,8 @@ exports.clearNoShow = async (req, res) => {
                 available_seats: updatedTrip.availableSeats
             });
         }
+
+        await syncTripById(trip_id);
 
 
         res.json({
@@ -985,6 +1159,8 @@ exports.cancelPassenger = async (req, res) => {
             });
         }
 
+        await syncTripById(queue.trip);
+
 
         res.json({
             success: true,
@@ -1003,6 +1179,8 @@ exports.cancelPassenger = async (req, res) => {
 exports.sendDepartureNotification = async (req, res) => {
     try {
         const { trip_id } = req.params;
+
+        await syncTripById(trip_id);
 
         // Get trip info for notification message
         const trip = await Trip.findById(trip_id).populate('route');
@@ -1032,6 +1210,7 @@ exports.sendDepartureNotification = async (req, res) => {
 
         // 2) Forward to passenger backend via internal API (so passenger socket also broadcasts)
         const passengerApiUrl = process.env.PASSENGER_API_URL;
+        let passengerForwarded = false;
         if (passengerApiUrl) {
             try {
                 const departureSecret = process.env.DEPARTURE_NOTIFY_SECRET || '';
@@ -1049,12 +1228,22 @@ exports.sendDepartureNotification = async (req, res) => {
                     },
                     timeout: 5000
                 });
+                passengerForwarded = true;
             } catch (forwardErr) {
-                console.warn('[Notify] Could not forward to passenger backend:', forwardErr.message);
+                const status = forwardErr.response?.status;
+                const body = forwardErr.response?.data;
+                console.warn('[Notify] Could not forward to passenger backend:', status ? `status=${status}` : forwardErr.message, body || '');
             }
+        } else {
+            console.warn('[Notify] PASSENGER_API_URL is not configured; passenger backend will not receive departure alerts');
         }
 
-        res.json({ success: true, notifications_sent: true, method: 'socket_and_forward' });
+        res.json({
+            success: true,
+            notifications_sent: true,
+            passenger_forwarded: passengerForwarded,
+            method: 'socket_and_forward'
+        });
     } catch (error) {
         console.error('[Notify Error]', error);
         res.status(500).json({ success: false, error: 'ส่งการแจ้งเตือนล้มเหลว' });
@@ -1086,6 +1275,8 @@ exports.confirmDeparture = async (req, res) => {
         if (io) {
             io.to(`trip-${trip_id}`).emit('trip:departed', { trip_id });
         }
+
+        await syncTripById(trip_id);
 
 
         res.json({
@@ -1162,6 +1353,7 @@ exports.completeTrip = async (req, res) => {
         trip.arrivalTime = new Date();
         trip.completedAt = new Date();
         await trip.save();
+        await syncTripById(trip_id);
 
         // Keep driver binding, just mark van ready for next trip
         if (trip.vanRef) {

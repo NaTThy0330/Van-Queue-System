@@ -17,13 +17,17 @@ const initSocket = (server) => {
     });
     io.on("connection", (socket) => {
         socket.on("join:trip", (tripId) => {
-            if (tripId)
+            if (tripId) {
                 socket.join(tripRoom(tripId));
+                console.log(`[Socket] join trip room ${tripRoom(tripId)} (${socket.id})`);
+            }
         });
         socket.on("leave:trip", (tripId) => socket.leave(tripRoom(tripId)));
         socket.on("join:passenger", (passengerId) => {
-            if (passengerId)
+            if (passengerId) {
                 socket.join(passengerRoom(passengerId));
+                console.log(`[Socket] join passenger room ${passengerRoom(passengerId)} (${socket.id})`);
+            }
         });
         socket.on("leave:passenger", (passengerId) => socket.leave(passengerRoom(passengerId)));
     });
@@ -56,6 +60,7 @@ const emitDepartureAlert = (payload) => {
     };
     const server = ensureIO();
     // Emit to trip room (passengers who booked this trip)
+    console.log(`[Socket] emit departure alert to ${tripRoom(payload.tripId)}`);
     server.to(tripRoom(payload.tripId)).emit("departure:alert", alertData);
 };
 exports.emitDepartureAlert = emitDepartureAlert;

@@ -21,6 +21,7 @@ export default function TripList({ driver, van, onSelectTrip, onBack }) {
         const routeName = trip.route_id?.route_name || '';
         
         // Hide past trips (client-side safety)
+        if (trip.isSpecialRound || trip.is_special_round) return true;
         const depTime = new Date(trip.departure_time);
         if (depTime < new Date()) return false;
 

@@ -3,23 +3,28 @@ import { getApiUrl } from "./env";
 
 let socket: Socket | null = null;
 let joinedTripIds = new Set<string>();
+let joinedPassengerId: string | null = null;
 
 const getPassengerBackendUrl = () => getApiUrl();
 
 const ensureSocket = () => {
-  if (socket?.connected) {
+  if (socket) {
     return socket;
   }
 
   socket = io(getPassengerBackendUrl(), {
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"],
     reconnection: true,
     reconnectionDelay: 3000,
   });
 
   socket.on("connect", () => {
+    console.log("[Notification] Connected to passenger server");
     for (const tripId of joinedTripIds) {
       socket?.emit("join:trip", tripId);
+    }
+    if (joinedPassengerId) {
+      socket?.emit("join:passenger", joinedPassengerId);
     }
   });
 
@@ -49,6 +54,21 @@ export const syncDepartureTripSubscriptions = (tripIds: string[]) => {
   joinedTripIds = nextTripIds;
 };
 
+export const syncPassengerSubscription = (passengerId?: string | null) => {
+  const s = ensureSocket();
+  const nextPassengerId = passengerId || null;
+
+  if (joinedPassengerId && joinedPassengerId !== nextPassengerId) {
+    s.emit("leave:passenger", joinedPassengerId);
+  }
+
+  if (nextPassengerId && joinedPassengerId !== nextPassengerId) {
+    s.emit("join:passenger", nextPassengerId);
+  }
+
+  joinedPassengerId = nextPassengerId;
+};
+
 export const onDepartureAlert = (
   callback: (data: { trip_id: string; title: string; message: string; route?: string | null; departure_time?: string | null }) => void
 ): (() => void) => {
@@ -65,4 +85,5 @@ export const disconnectPassengerSocket = () => {
     socket = null;
   }
   joinedTripIds = new Set();
+  joinedPassengerId = null;
 };

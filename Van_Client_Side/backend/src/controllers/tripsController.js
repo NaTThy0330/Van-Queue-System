@@ -41,18 +41,25 @@ const listTrips = async (req, res) => {
     }
     // Only show trips that have a driver assigned
     filter.driverId = { $ne: null };
-    if (date) {
-        filter.departureTime = parseDateRange(date);
-    }
-    // Always exclude trips whose departure time has already passed
     const now = new Date();
-    if (filter.departureTime) {
-        // Merge with existing date range
-        filter.departureTime.$gte = filter.departureTime.$gte > now ? filter.departureTime.$gte : now;
-    } else {
-        filter.departureTime = { $gt: now };
+    const departureRange = date ? parseDateRange(date) : { $gt: now };
+    if (departureRange.$gte && departureRange.$gte < now) {
+        departureRange.$gte = now;
     }
-    const trips = await Trip_1.TripModel.find(filter).populate("route").sort({ departureTime: 1 });
+
+    const regularTripsFilter = {
+        ...filter,
+        departureTime: departureRange,
+        isSpecialRound: { $ne: true },
+    };
+    const specialTripsFilter = {
+        ...filter,
+        isSpecialRound: true,
+    };
+
+    const trips = await Trip_1.TripModel.find({
+        $or: [regularTripsFilter, specialTripsFilter]
+    }).populate("route").sort({ departureTime: 1 });
     res.json({ trips });
 };
 exports.listTrips = listTrips;
